@@ -1,0 +1,116 @@
+import { createClient } from '@/lib/supabase/server'
+
+export type RankSnapshot = {
+  keyword: string
+  rank: number | null
+  scan_week: string
+}
+
+export type AIVisibilityResult = {
+  engine: string
+  query: string
+  mentioned: boolean
+  position: number | null
+  excerpt: string | null
+  scan_week: string
+}
+
+export type CitationSnapshot = {
+  platform: string
+  category: string
+  status: string
+  issue: string | null
+  scan_date: string
+}
+
+export type StoredReview = {
+  id: string
+  source: string
+  author: string | null
+  rating: number | null
+  body: string | null
+  published_at: string | null
+  replied: boolean
+  reply_text: string | null
+}
+
+export async function getRankSnapshots(userId: string, weeksBack = 8): Promise<RankSnapshot[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('rank_snapshots')
+    .select('keyword, rank, scan_week')
+    .eq('user_id', userId)
+    .order('scan_week', { ascending: false })
+    .limit(weeksBack * 12)
+
+  return (data ?? []) as RankSnapshot[]
+}
+
+export async function getLatestAIVisibility(userId: string): Promise<AIVisibilityResult[]> {
+  const supabase = await createClient()
+
+  const { data: latest } = await supabase
+    .from('ai_visibility_results')
+    .select('scan_week')
+    .eq('user_id', userId)
+    .order('scan_week', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!latest) return []
+
+  const { data } = await supabase
+    .from('ai_visibility_results')
+    .select('engine, query, mentioned, position, excerpt, scan_week')
+    .eq('user_id', userId)
+    .eq('scan_week', latest.scan_week)
+
+  return (data ?? []) as AIVisibilityResult[]
+}
+
+export async function getLatestCitations(userId: string): Promise<CitationSnapshot[]> {
+  const supabase = await createClient()
+
+  const { data: latest } = await supabase
+    .from('citation_snapshots')
+    .select('scan_date')
+    .eq('user_id', userId)
+    .order('scan_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!latest) return []
+
+  const { data } = await supabase
+    .from('citation_snapshots')
+    .select('platform, category, status, issue, scan_date')
+    .eq('user_id', userId)
+    .eq('scan_date', latest.scan_date)
+
+  return (data ?? []) as CitationSnapshot[]
+}
+
+export async function getReviews(userId: string, limit = 20): Promise<StoredReview[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('reviews')
+    .select('id, source, author, rating, body, published_at, replied, reply_text')
+    .eq('user_id', userId)
+    .order('published_at', { ascending: false })
+    .limit(limit)
+
+  return (data ?? []) as StoredReview[]
+}
+
+export async function updateReviewReply(
+  userId: string,
+  reviewId: string,
+  replyText: string
+): Promise<void> {
+  const supabase = await createClient()
+  await supabase
+    .from('reviews')
+    .update({ replied: true, reply_text: replyText })
+    .eq('id', reviewId)
+    .eq('user_id', userId)
+}
