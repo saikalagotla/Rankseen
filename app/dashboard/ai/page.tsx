@@ -93,9 +93,11 @@ export default async function AIVisibilityPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-            Upgrade to unlock all 5
-          </a>
+          {userPlan !== 'pro' && userPlan !== 'freelancer' && (
+            <a href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+              Upgrade to unlock all 5
+            </a>
+          )}
           <ScanTrigger endpoint="/api/scan/ai" label="Scan now" disabled={!hasAnyKey} />
         </div>
       </div>

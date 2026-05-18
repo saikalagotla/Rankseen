@@ -78,17 +78,28 @@ function StepIndicator({ step }: { step: number }) {
   )
 }
 
+function loadSetupData() {
+  try {
+    const saved = localStorage.getItem('rankseen_setup')
+    if (saved) return JSON.parse(saved) as Record<string, unknown>
+  } catch {}
+  return null
+}
+
 export default function OnboardingForm() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const [business, setBusiness] = useState({
-    name: '',
-    type: 'Barbershop',
-    city: '',
-    gbp: '',
+  const [business, setBusiness] = useState(() => {
+    const d = typeof window !== 'undefined' ? loadSetupData() : null
+    return {
+      name: (d?.businessName as string | undefined) ?? '',
+      type: (d?.businessType as string | undefined) ?? 'Barbershop',
+      city: (d?.cityState as string | undefined) ?? '',
+      gbp: (d?.gbpUrl as string | undefined) ?? '',
+    }
   })
   const [businessErrors, setBusinessErrors] = useState({ name: false, city: false })
 
@@ -149,6 +160,7 @@ export default function OnboardingForm() {
         })
 
       if (dbError) throw dbError
+      try { localStorage.removeItem('rankseen_setup') } catch {}
       router.push('/dashboard')
       router.refresh()
     } catch (e) {

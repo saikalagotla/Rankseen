@@ -1,9 +1,10 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-export default function UpgradePage({ searchParams }: { searchParams: { success?: string } }) {
-  const success = searchParams.success === '1'
+export default async function UpgradePage({ searchParams }: { searchParams: Promise<{ success?: string }> }) {
+  const { success } = await searchParams
 
-  if (!success) return null
+  if (success !== '1') redirect('/dashboard')
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
