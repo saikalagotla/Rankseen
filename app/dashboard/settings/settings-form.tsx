@@ -56,6 +56,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
     profile?.keywords?.length ? profile.keywords : []
   )
   const [newKeyword, setNewKeyword] = useState('')
+  const [keywordSaving, setKeywordSaving] = useState(false)
 
   const [signingOut, setSigningOut] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
@@ -88,16 +89,29 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
     }
   }
 
-  function addKeyword() {
-    const kw = newKeyword.trim().toLowerCase()
-    if (kw && !keywords.includes(kw) && keywords.length < 10) {
-      setKeywords(prev => [...prev, kw])
-      setNewKeyword('')
+  async function persistKeywords(next: string[]) {
+    setKeywordSaving(true)
+    try {
+      const supabase = createClient()
+      await supabase.from('profiles').upsert({ id: userId, keywords: next })
+    } finally {
+      setKeywordSaving(false)
     }
   }
 
-  function removeKeyword(kw: string) {
-    setKeywords(prev => prev.filter(k => k !== kw))
+  async function addKeyword() {
+    const kw = newKeyword.trim().toLowerCase()
+    if (!kw || keywords.includes(kw) || keywords.length >= 10) return
+    const next = [...keywords, kw]
+    setKeywords(next)
+    setNewKeyword('')
+    await persistKeywords(next)
+  }
+
+  async function removeKeyword(kw: string) {
+    const next = keywords.filter(k => k !== kw)
+    setKeywords(next)
+    await persistKeywords(next)
   }
 
   async function handleUpgrade() {
@@ -251,10 +265,10 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
             />
             <button
               onClick={addKeyword}
-              disabled={!newKeyword.trim()}
+              disabled={!newKeyword.trim() || keywordSaving}
               className="text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white px-4 py-2.5 rounded-lg transition-colors shrink-0"
             >
-              Add
+              {keywordSaving ? 'Saving…' : 'Add'}
             </button>
           </div>
         ) : (
@@ -263,7 +277,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
           </p>
         )}
 
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">Changes save when you click &ldquo;Save changes&rdquo; above.</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">Keywords save automatically when you add or remove them.</p>
       </div>
 
       {/* Plan */}
