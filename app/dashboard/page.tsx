@@ -4,6 +4,7 @@ import { getProfile } from '@/lib/profile'
 import { getRankSnapshots, getLatestAIVisibility, getLatestCitations, getReviews } from '@/lib/scans'
 import ScoreCard from '../components/score-card'
 import ScanTrigger from './components/scan-trigger'
+import UpgradeButton from './components/upgrade-button'
 
 function ChangeChip({ dir, change }: { dir: string; change: number }) {
   if (dir === 'flat') {
@@ -20,7 +21,7 @@ function ChangeChip({ dir, change }: { dir: string; change: number }) {
 type DigestItem = {
   color: 'green' | 'amber' | 'gray'
   text: React.ReactNode
-  link?: { label: string; href: string }
+  link?: { label: string; href: string; checkout?: boolean }
 }
 
 export default async function DashboardPage() {
@@ -176,7 +177,7 @@ export default async function DashboardPage() {
             Upgrade to Pro to track whether ChatGPT, Claude, and Bing recommend you when customers search for local {bizType.toLowerCase()}s.
           </>
         ),
-        link: { label: 'Upgrade to Pro', href: '/setup' },
+        link: { label: 'Upgrade to Pro', href: '/setup', checkout: true },
       })
     }
   } else {
@@ -192,7 +193,7 @@ export default async function DashboardPage() {
       ),
       link: userPlan === 'pro'
         ? { label: 'Run AI scan', href: '/dashboard/ai' }
-        : { label: 'Upgrade to Pro', href: '/setup' },
+        : { label: 'Upgrade to Pro', href: '/setup', checkout: true },
     })
   }
 
@@ -321,9 +322,11 @@ export default async function DashboardPage() {
                 <div>
                   <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed">{item.text}</p>
                   {item.link && (
-                    <a href={item.link.href} className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-2 hover:underline">
-                      {item.link.label} &rarr;
-                    </a>
+                    item.link.checkout
+                      ? <span className="mt-2 block"><UpgradeButton label={item.link.label} variant="link" /></span>
+                      : <a href={item.link.href} className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-2 hover:underline">
+                          {item.link.label} &rarr;
+                        </a>
                   )}
                 </div>
               </li>
@@ -437,9 +440,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2">
             <a href="/dashboard/ai" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">View full report →</a>
             {userPlan !== 'pro' && (
-              <a href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                Upgrade to unlock all
-              </a>
+              <UpgradeButton label="Upgrade to unlock all" variant="small" />
             )}
           </div>
         </div>

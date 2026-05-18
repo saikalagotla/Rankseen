@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { getLatestAIVisibility } from '@/lib/scans'
 import ScanTrigger from '../components/scan-trigger'
+import UpgradeButton from '../components/upgrade-button'
 
 const ENGINE_META: Record<string, { label: string; icon: string; plan: 'solo' | 'pro' }> = {
   perplexity: { label: 'Perplexity', icon: '🔍', plan: 'solo' },
@@ -94,9 +95,7 @@ export default async function AIVisibilityPage() {
         </div>
         <div className="flex items-center gap-3">
           {userPlan !== 'pro' && userPlan !== 'freelancer' && (
-            <a href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-              Upgrade to unlock all 5
-            </a>
+            <UpgradeButton label="Upgrade to unlock all 5" variant="button" />
           )}
           <ScanTrigger endpoint="/api/scan/ai" label="Scan now" disabled={!hasAnyKey} />
         </div>
@@ -203,7 +202,7 @@ export default async function AIVisibilityPage() {
                     Upgrade to see how you rank when customers ask {engine.label} for local {bizType}s.
                   </p>
                 </div>
-                <a href="/setup" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Upgrade to Pro →</a>
+                <UpgradeButton label="Upgrade to Pro" variant="link" />
               </div>
             ) : !engine.hasResults ? (
               <div className="px-6 py-8 flex flex-col items-center text-center gap-2">
