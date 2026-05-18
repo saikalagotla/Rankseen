@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/navigation'
@@ -98,6 +99,19 @@ export default function Sidebar({ plan }: { plan: string }) {
   const user = useUser()
   const meta = getUserMeta(user)
   const isPro = plan === 'pro' || plan === 'freelancer'
+  const [upgrading, setUpgrading] = React.useState(false)
+
+  async function handleUpgrade() {
+    setUpgrading(true)
+    try {
+      const res = await fetch('/api/checkout', { method: 'POST' })
+      const { url, error } = await res.json()
+      if (error) throw new Error(error)
+      window.location.href = url
+    } catch {
+      setUpgrading(false)
+    }
+  }
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -147,12 +161,13 @@ export default function Sidebar({ plan }: { plan: string }) {
           <div className="bg-gradient-to-r from-emerald-900 to-emerald-800 rounded-xl p-4">
             <p className="text-white text-xs font-semibold mb-1">Solo Plan</p>
             <p className="text-emerald-300 text-xs mb-3">Upgrade to unlock AI visibility and review monitoring.</p>
-            <Link
-              href="/setup"
-              className="block text-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+            <button
+              onClick={handleUpgrade}
+              disabled={upgrading}
+              className="w-full text-center bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
             >
-              Upgrade to Pro
-            </Link>
+              {upgrading ? 'Redirecting…' : 'Upgrade to Pro'}
+            </button>
           </div>
         </div>
       )}
