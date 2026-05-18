@@ -108,7 +108,7 @@ export default function ReviewsClient({ reviews }: Props) {
 
   if (totalReviews === 0) {
     return (
-      <div className="p-8 max-w-6xl">
+      <div className="p-8 max-w-6xl mx-auto w-full">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reviews</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor and respond to customer reviews</p>
@@ -127,7 +127,7 @@ export default function ReviewsClient({ reviews }: Props) {
   }
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-8 max-w-6xl mx-auto w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

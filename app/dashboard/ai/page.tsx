@@ -82,7 +82,7 @@ export default async function AIVisibilityPage() {
     }, null)
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-8 max-w-6xl mx-auto w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
