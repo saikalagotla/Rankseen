@@ -100,15 +100,18 @@ export default function Sidebar({ plan }: { plan: string }) {
   const meta = getUserMeta(user)
   const isPro = plan === 'pro' || plan === 'freelancer'
   const [upgrading, setUpgrading] = React.useState(false)
+  const [upgradeError, setUpgradeError] = React.useState('')
 
   async function handleUpgrade() {
     setUpgrading(true)
+    setUpgradeError('')
     try {
       const res = await fetch('/api/checkout', { method: 'POST' })
       const { url, error } = await res.json()
       if (error) throw new Error(error)
       window.location.href = url
-    } catch {
+    } catch (e) {
+      setUpgradeError(e instanceof Error ? e.message : 'Something went wrong.')
       setUpgrading(false)
     }
   }
@@ -168,6 +171,9 @@ export default function Sidebar({ plan }: { plan: string }) {
             >
               {upgrading ? 'Redirecting…' : 'Upgrade to Pro'}
             </button>
+            {upgradeError && (
+              <p className="text-red-300 text-xs mt-2">{upgradeError}</p>
+            )}
           </div>
         </div>
       )}

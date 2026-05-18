@@ -60,6 +60,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
 
   const [signingOut, setSigningOut] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
+  const [upgradeError, setUpgradeError] = useState('')
 
   async function handleSave() {
     setSaving(true)
@@ -116,12 +117,14 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
 
   async function handleUpgrade() {
     setUpgrading(true)
+    setUpgradeError('')
     try {
       const res = await fetch('/api/checkout', { method: 'POST' })
       const { url, error } = await res.json()
       if (error) throw new Error(error)
       window.location.href = url
-    } catch {
+    } catch (e) {
+      setUpgradeError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
       setUpgrading(false)
     }
   }
@@ -315,6 +318,11 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
             </button>
           </div>
         </div>
+        {upgradeError && (
+          <p className="mt-3 text-xs text-red-500 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-lg px-3.5 py-2.5">
+            {upgradeError}
+          </p>
+        )}
       </div>
 
       {/* Account */}
