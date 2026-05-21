@@ -2,6 +2,7 @@ export interface AICheckResult {
   mentioned: boolean
   position: number | null
   excerpt: string | null
+  competitors: Array<{ name: string; position: number }>
 }
 
 export function generateAIQueries(businessType: string, cityState: string): string[] {
@@ -15,12 +16,36 @@ export function generateAIQueries(businessType: string, cityState: string): stri
   ]
 }
 
+// Extract other businesses mentioned in a numbered/bulleted AI list response.
+function parseCompetitors(
+  text: string,
+  ownName: string
+): Array<{ name: string; position: number }> {
+  const ownLower = ownName.toLowerCase().trim()
+  const competitors: Array<{ name: string; position: number }> = []
+  for (const line of text.split('\n')) {
+    // Match "1. Business Name" or "1) Business Name", strip markdown bold (**)
+    const match = line.match(/^\s*(\d+)[.)]\s*\*{0,2}([^*\n\r]+?)\*{0,2}\s*(?:[-–—:]|$)/)
+    if (!match) continue
+    const position = parseInt(match[1])
+    const name = match[2].trim()
+    if (!name) continue
+    const nameLower = name.toLowerCase()
+    if (nameLower.includes(ownLower) || (ownLower.length > 4 && ownLower.includes(nameLower))) continue
+    if (competitors.length >= 5) break
+    competitors.push({ name, position })
+  }
+  return competitors
+}
+
 function parseMention(text: string, name: string): AICheckResult {
   const lower = text.toLowerCase()
   const nameLower = name.toLowerCase()
 
+  const competitors = parseCompetitors(text, name)
+
   if (!lower.includes(nameLower)) {
-    return { mentioned: false, position: null, excerpt: null }
+    return { mentioned: false, position: null, excerpt: null, competitors }
   }
 
   const lines = text.split('\n')
@@ -42,7 +67,7 @@ function parseMention(text: string, name: string): AICheckResult {
     position = 1
   }
 
-  return { mentioned: true, position, excerpt }
+  return { mentioned: true, position, excerpt, competitors }
 }
 
 export async function checkPerplexity(
@@ -106,6 +131,75 @@ export async function checkClaude(
   return parseMention(data.content?.[0]?.text ?? '', businessName)
 }
 
+export async function checkChatGPT(
+  query: string,
+  businessName: string
+): Promise<AICheckResult> {
+  const key = process.env.OPENAI_API_KEY
+  if (!key) throw new Error('OPENAI_API_KEY not configured')
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: query }],
+      max_tokens: 1024,
+    }),
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`OpenAI HTTP ${res.status}: ${text.slice(0, 200)}`)
+  }
+
+  const data = await res.json()
+  return parseMention(data.choices?.[0]?.message?.content ?? '', businessName)
+}
+
+export async function checkBingCopilot(
+  query: string,
+  businessName: string,
+  serpApiKey: string
+): Promise<AICheckResult> {
+  const params = new URLSearchParams({
+    api_key: serpApiKey,
+    engine: 'bing',
+    q: query,
+    count: '10',
+  })
+
+  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+    cache: 'no-store',
+  })
+
+  if (!res.ok) return { mentioned: false, position: null, excerpt: null, competitors: [] }
+
+  const data = await res.json()
+
+  // Prefer AI-generated answer box over organic results
+  const aiAnswer =
+    data.answer_box?.snippet ??
+    data.answer_box?.answer ??
+    data.knowledge_graph?.description ??
+    ''
+
+  if (aiAnswer) return parseMention(aiAnswer, businessName)
+
+  // Fall back to top organic snippets
+  const organic: Array<{ title?: string; snippet?: string }> = data.organic_results ?? []
+  const combined = organic
+    .slice(0, 5)
+    .map(r => `${r.title ?? ''} ${r.snippet ?? ''}`)
+    .join('\n')
+
+  return parseMention(combined, businessName)
+}
+
 export async function checkGoogleAIOverview(
   query: string,
   businessName: string,
@@ -122,7 +216,7 @@ export async function checkGoogleAIOverview(
     cache: 'no-store',
   })
 
-  if (!res.ok) return { mentioned: false, position: null, excerpt: null }
+  if (!res.ok) return { mentioned: false, position: null, excerpt: null, competitors: [] }
 
   const data = await res.json()
 
@@ -134,7 +228,7 @@ export async function checkGoogleAIOverview(
     data.answer_box?.snippet ??
     ''
 
-  if (!aiOverview) return { mentioned: false, position: null, excerpt: null }
+  if (!aiOverview) return { mentioned: false, position: null, excerpt: null, competitors: [] }
 
   return parseMention(aiOverview, businessName)
 }

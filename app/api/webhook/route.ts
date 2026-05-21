@@ -22,12 +22,13 @@ export async function POST(request: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
     const userId = session.metadata?.user_id ?? session.client_reference_id
+    const plan = session.metadata?.plan ?? 'pro'
     const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null
     if (userId) {
       await supabase
         .from('profiles')
         .update({
-          plan: 'pro',
+          plan,
           ...(customerId ? { stripe_customer_id: customerId } : {}),
         })
         .eq('id', userId)
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
     await supabase
       .from('profiles')
-      .update({ plan: 'solo' })
+      .update({ plan: 'free' })
       .eq('stripe_customer_id', customerId)
   }
 

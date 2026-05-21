@@ -98,7 +98,10 @@ export default function Sidebar({ plan }: { plan: string }) {
   const router = useRouter()
   const user = useUser()
   const meta = getUserMeta(user)
-  const isPro = plan === 'pro' || plan === 'freelancer'
+  const isPro = plan === 'pro'
+  const isStarter = plan === 'starter'
+  const isFree = !isPro && !isStarter
+  const upgradePlan: 'starter' | 'pro' = isFree ? 'starter' : 'pro'
   const [upgrading, setUpgrading] = React.useState(false)
   const [upgradeError, setUpgradeError] = React.useState('')
 
@@ -106,7 +109,11 @@ export default function Sidebar({ plan }: { plan: string }) {
     setUpgrading(true)
     setUpgradeError('')
     try {
-      const res = await fetch('/api/checkout', { method: 'POST' })
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: upgradePlan }),
+      })
       const { url, error } = await res.json()
       if (error) throw new Error(error)
       window.location.href = url
@@ -162,14 +169,18 @@ export default function Sidebar({ plan }: { plan: string }) {
       {!isPro && (
         <div className="px-4 pb-3 shrink-0">
           <div className="bg-gradient-to-r from-emerald-900 to-emerald-800 rounded-xl p-4">
-            <p className="text-white text-xs font-semibold mb-1">Solo Plan</p>
-            <p className="text-emerald-300 text-xs mb-3">Upgrade to unlock AI visibility and review monitoring.</p>
+            <p className="text-white text-xs font-semibold mb-1 capitalize">{isFree ? 'Free' : 'Starter'} Plan</p>
+            <p className="text-emerald-300 text-xs mb-3">
+              {isFree
+                ? 'Upgrade to Starter to unlock more keywords and AI engines.'
+                : 'Upgrade to Pro for unlimited keywords and all 5 AI engines.'}
+            </p>
             <button
               onClick={handleUpgrade}
               disabled={upgrading}
               className="w-full text-center bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
             >
-              {upgrading ? 'Redirecting…' : 'Upgrade to Pro'}
+              {upgrading ? 'Redirecting…' : isFree ? 'Upgrade to Starter' : 'Upgrade to Pro'}
             </button>
             {upgradeError && (
               <p className="text-red-300 text-xs mt-2">{upgradeError}</p>

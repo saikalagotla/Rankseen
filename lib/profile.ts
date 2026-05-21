@@ -9,6 +9,10 @@ export type Profile = {
   phone: string | null
   plan: string
   keywords: string[]
+  place_id: string | null
+  yelp_place_id: string | null
+  google_reviews_synced_at: string | null
+  yelp_reviews_synced_at: string | null
 }
 
 export async function getProfile(): Promise<Profile | null> {
@@ -18,7 +22,7 @@ export async function getProfile(): Promise<Profile | null> {
     if (!user) return null
     const { data } = await supabase
       .from('profiles')
-      .select('id, business_name, business_type, city_state, gbp_url, phone, plan, keywords')
+      .select('id, business_name, business_type, city_state, gbp_url, phone, plan, keywords, place_id, yelp_place_id, google_reviews_synced_at, yelp_reviews_synced_at')
       .eq('id', user.id)
       .single()
     return (data as Profile) ?? null

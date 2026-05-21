@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Nav from './components/nav'
 import PricingCard from './components/pricing-card'
 import AnimateOnScroll from './components/animate-on-scroll'
+import { createClient } from '@/lib/supabase/server'
+import { getProfile } from '@/lib/profile'
 
 const features = [
   {
@@ -68,7 +70,13 @@ const stats = [
   { value: '0', label: 'agency jargon' },
 ]
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const profile = user ? await getProfile() : null
+  const userPlan = profile?.plan ?? null
+  // normalise legacy 'solo' to 'free'
+  const currentPlanKey = userPlan === 'solo' ? 'free' : (userPlan ?? null)
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <Nav />
@@ -187,13 +195,40 @@ export default function LandingPage() {
             <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Simple, honest pricing</h2>
             <p className="text-lg text-slate-500 dark:text-slate-400">No setup fees. No annual lock-in. Cancel any time.</p>
           </AnimateOnScroll>
-          <div className="grid md:grid-cols-3 gap-8 items-start">
+          <div className="grid md:grid-cols-3 gap-8 items-stretch">
             {[
-              { name: 'Solo', price: '$15', desc: 'For single-location businesses just getting started with local SEO.', features: ['1 location', '10 keywords tracked', 'Weekly digest email', 'Citation scan (20+ directories)', 'Google Maps rank tracking'], cta: 'Start Free Trial', href: '/setup', hl: false, badge: undefined },
-              { name: 'Pro', price: '$25', desc: 'The full picture — maps, AI, reviews, and competitors in one place.', features: ['Everything in Solo', 'AI visibility (5 engines)', 'Review monitoring + AI responses', 'Competitor snapshot', 'Priority email support'], cta: 'Start Free Trial', href: '/setup', hl: true, badge: 'Most Popular' },
-              { name: 'Freelancer', price: '$49', desc: 'For agencies and consultants managing multiple clients.', features: ['5 locations', 'All Pro features', 'White-label PDF reports', 'Client sharing links', 'Bulk keyword import'], cta: 'Start Free Trial', href: '/setup', hl: false, badge: undefined },
+              {
+                name: 'Free',
+                price: '$0',
+                desc: 'Get started tracking your local SEO with no commitment.',
+                features: ['3 keywords tracked', 'Google Maps rank tracking', '2 AI engines (Perplexity + Google AI)', 'Citation health scan', 'Weekly digest'],
+                cta: 'Get started free',
+                href: '/setup',
+                hl: false,
+                badge: undefined,
+              },
+              {
+                name: 'Starter',
+                price: '$19',
+                desc: 'More keywords, more AI engines, and basic reporting.',
+                features: ['10 keywords tracked', 'Everything in Free', '3 AI engines (+ Claude)', 'Competitor snapshot', 'Basic reports'],
+                cta: 'Start free trial',
+                href: '/setup',
+                hl: true,
+                badge: 'Most Popular',
+              },
+              {
+                name: 'Pro',
+                price: '$49',
+                desc: 'The full picture — unlimited tracking and all AI engines.',
+                features: ['Unlimited keywords', 'Everything in Starter', 'All 5 AI engines (+ ChatGPT + Bing)', 'Growth Advisor (AI action plan)', 'Priority support'],
+                cta: 'Start free trial',
+                href: '/setup',
+                hl: false,
+                badge: undefined,
+              },
             ].map((plan, i) => (
-              <AnimateOnScroll key={plan.name} stagger={(i + 1) as 1 | 2 | 3}>
+              <AnimateOnScroll key={plan.name} stagger={(i + 1) as 1 | 2 | 3} className="h-full">
                 <PricingCard
                   name={plan.name}
                   price={plan.price}
@@ -201,13 +236,14 @@ export default function LandingPage() {
                   features={plan.features}
                   cta={plan.cta}
                   ctaHref={plan.href}
-                  highlighted={plan.hl}
+                  highlighted={plan.hl && currentPlanKey !== plan.name.toLowerCase()}
                   badge={plan.badge}
+                  current={currentPlanKey === plan.name.toLowerCase()}
                 />
               </AnimateOnScroll>
             ))}
           </div>
-          <p className="text-center text-sm text-slate-400 dark:text-slate-500 mt-8">All plans include a 14-day free trial. No credit card required.</p>
+          <p className="text-center text-sm text-slate-400 dark:text-slate-500 mt-8">Free plan available forever. Paid plans include a 14-day free trial. No credit card required.</p>
         </div>
       </section>
 

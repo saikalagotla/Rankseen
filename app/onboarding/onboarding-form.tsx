@@ -106,17 +106,38 @@ export default function OnboardingForm() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [customKw, setCustomKw] = useState('')
+  const [loadingKeywords, setLoadingKeywords] = useState(false)
 
-  function goToStep2() {
+  async function goToStep2() {
     const errors = { name: !business.name.trim(), city: !business.city.trim() }
     setBusinessErrors(errors)
     if (errors.name || errors.city) return
 
+    setStep(2)
+    setLoadingKeywords(true)
+
+    try {
+      const res = await fetch('/api/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName: business.name, businessType: business.type, cityState: business.city }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.keywords) && data.keywords.length > 0) {
+          setSuggestions(data.keywords)
+          setSelected(new Set(data.keywords.slice(0, 6)))
+          setLoadingKeywords(false)
+          return
+        }
+      }
+    } catch {}
+
+    // Fallback to static suggestions
     const sug = generateSuggestions(business.type, business.city)
     setSuggestions(sug)
-    // Pre-select first 6
     setSelected(new Set(sug.slice(0, 6)))
-    setStep(2)
+    setLoadingKeywords(false)
   }
 
   function toggleKeyword(kw: string) {
@@ -248,11 +269,21 @@ export default function OnboardingForm() {
         <>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Choose keywords to track</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            RankSeen checks your Google Maps ranking for these every Monday. Select up to 10.
+            {loadingKeywords
+              ? <>Generating keywords for <strong className="text-slate-700 dark:text-slate-300">{business.name}</strong>…</>
+              : 'RankSeen checks your Google Maps ranking for these every Monday. Select up to 10.'}
           </p>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {suggestions.map(kw => {
+            {loadingKeywords ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="inline-flex h-7 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse"
+                  style={{ width: `${5 + (i % 4) * 1.5}rem` }}
+                />
+              ))
+            ) : suggestions.map(kw => {
               const on = selected.has(kw)
               const disabled = !on && selected.size >= 10
               return (
@@ -279,23 +310,25 @@ export default function OnboardingForm() {
             })}
           </div>
 
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              className={`${inputCls()} flex-1`}
-              placeholder="Add a custom keyword…"
-              value={customKw}
-              onChange={e => setCustomKw(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addCustom()}
-            />
-            <button
-              onClick={addCustom}
-              disabled={!customKw.trim() || selected.size >= 10}
-              className="text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-lg transition-colors shrink-0"
-            >
-              Add
-            </button>
-          </div>
+          {!loadingKeywords && (
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                className={`${inputCls()} flex-1`}
+                placeholder="Add a custom keyword…"
+                value={customKw}
+                onChange={e => setCustomKw(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCustom()}
+              />
+              <button
+                onClick={addCustom}
+                disabled={!customKw.trim() || selected.size >= 10}
+                className="text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-lg transition-colors shrink-0"
+              >
+                Add
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs mb-6">
             <span className={`font-medium ${selected.size >= 10 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}`}>
@@ -321,10 +354,10 @@ export default function OnboardingForm() {
             </button>
             <button
               onClick={handleFinish}
-              disabled={selected.size === 0 || saving}
+              disabled={loadingKeywords || selected.size === 0 || saving}
               className="flex-[2] bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-semibold py-3 rounded-xl transition-colors"
             >
-              {saving ? 'Setting up your dashboard…' : 'Finish setup →'}
+              {saving ? 'Setting up your dashboard…' : loadingKeywords ? 'Generating keywords…' : 'Finish setup →'}
             </button>
           </div>
         </>

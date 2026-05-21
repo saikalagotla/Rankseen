@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
-import { getRankSnapshots } from '@/lib/scans'
+import { getRankSnapshots, getLatestCompetitors } from '@/lib/scans'
 import ScanTrigger from '../components/scan-trigger'
 
 function ChangeChip({ dir, change }: { dir: string; change: number }) {
@@ -59,9 +59,10 @@ export default async function MapsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [profile, snapshots] = await Promise.all([
+  const [profile, snapshots, competitors] = await Promise.all([
     getProfile(),
     getRankSnapshots(user.id),
+    getLatestCompetitors(user.id),
   ])
 
   const businessName = profile?.business_name ?? 'Your Business'
@@ -239,12 +240,60 @@ export default async function MapsPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs text-slate-400 dark:text-slate-500">
+      <div className="flex flex-wrap gap-4 text-xs text-slate-400 dark:text-slate-500 mb-8">
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/40 inline-block" />#1 position</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-50 dark:bg-emerald-950/50 inline-block" />#2–3 (top 3-pack)</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-50 dark:bg-blue-950/50 inline-block" />#4–7 (page 1)</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-slate-100 dark:bg-slate-800 inline-block" />#8+ or not ranked</span>
         <span className="flex items-center gap-1.5 ml-auto text-slate-400">Trend: <span className="text-emerald-500 ml-1">green</span> = improving · <span className="text-amber-500 ml-1">amber</span> = declining</span>
+      </div>
+
+      {/* Competitor Snapshot */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Competitor Snapshot</h2>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Businesses ranking above you for your tracked keywords</p>
+        </div>
+
+        {competitors.length === 0 ? (
+          <div className="px-6 py-10 text-center">
+            <p className="text-sm text-slate-400 dark:text-slate-500 mb-1">No competitor data yet.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">Run a Google Maps scan to see who&apos;s ranking above you.</p>
+          </div>
+        ) : (() => {
+          // Group competitors by keyword
+          const byKeyword = new Map<string, Array<{ name: string; position: number }>>()
+          for (const c of competitors) {
+            if (!byKeyword.has(c.keyword)) byKeyword.set(c.keyword, [])
+            byKeyword.get(c.keyword)!.push({ name: c.competitor_name, position: c.position })
+          }
+
+          return (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/70">
+              {Array.from(byKeyword.entries()).map(([keyword, comps]) => (
+                <div key={keyword} className="px-6 py-4">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">{keyword}</p>
+                  <div className="flex flex-col gap-2">
+                    {comps.map(comp => (
+                      <div key={comp.name} className="flex items-center gap-3">
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold ring-1 shrink-0
+                          ${comp.position === 1
+                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 ring-amber-200 dark:ring-amber-800'
+                            : comp.position <= 3
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-800'
+                            : 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 ring-blue-200 dark:ring-blue-800'
+                          }`}>
+                          #{comp.position}
+                        </span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{comp.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

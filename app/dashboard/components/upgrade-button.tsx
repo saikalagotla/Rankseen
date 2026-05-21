@@ -7,9 +7,11 @@ type Variant = 'button' | 'small' | 'link'
 export default function UpgradeButton({
   label = 'Upgrade to Pro',
   variant = 'button',
+  plan = 'pro',
 }: {
   label?: string
   variant?: Variant
+  plan?: 'starter' | 'pro'
 }) {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState('')
@@ -18,7 +20,11 @@ export default function UpgradeButton({
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/checkout', { method: 'POST' })
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
       const { url, error } = await res.json()
       if (error) throw new Error(error)
       window.location.href = url

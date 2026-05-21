@@ -20,26 +20,26 @@ const steps = ['Business Info', 'Keywords', 'Choose Plan']
 
 const plans = [
   {
-    name: 'Solo',
-    price: '$15',
-    description: 'For single-location businesses.',
-    features: ['1 location', '10 keywords tracked', 'Weekly digest email', 'Citation scan', 'Maps rank tracking'],
+    name: 'Free',
+    price: '$0',
+    description: 'Start tracking with no commitment.',
+    features: ['3 keywords tracked', 'Maps rank tracking', '2 AI engines', 'Citation scan', 'Weekly digest'],
     highlighted: false,
     badge: null,
   },
   {
-    name: 'Pro',
-    price: '$25',
-    description: 'Full picture — maps, AI, reviews.',
-    features: ['Everything in Solo', 'AI visibility (5 engines)', 'Review monitoring', 'Competitor snapshot', 'Priority support'],
+    name: 'Starter',
+    price: '$19',
+    description: 'More keywords and AI coverage.',
+    features: ['10 keywords tracked', 'Everything in Free', '3 AI engines (+ Claude)', 'Competitor snapshot', 'Basic reports'],
     highlighted: true,
     badge: 'Most Popular',
   },
   {
-    name: 'Freelancer',
+    name: 'Pro',
     price: '$49',
-    description: 'For agencies managing clients.',
-    features: ['5 locations', 'All Pro features', 'White-label PDF reports', 'Client sharing links', 'Bulk keyword import'],
+    description: 'Unlimited tracking and all AI engines.',
+    features: ['Unlimited keywords', 'Everything in Starter', 'All 5 AI engines', 'Growth Advisor', 'Priority support'],
     highlighted: false,
     badge: null,
   },
@@ -56,12 +56,15 @@ export default function SetupPage() {
 
   const [keywords, setKeywords] = useState<string[]>([])
   const [keywordInput, setKeywordInput] = useState('')
+  const [loadingKeywords, setLoadingKeywords] = useState(false)
 
-  // Populate keywords when business type changes
+  // Populate static suggestions when business type changes (fallback only)
   useEffect(() => {
-    const suggestions = keywordSuggestions[businessType]
-    setKeywords(suggestions.slice(0, 5))
-  }, [businessType])
+    if (step === 0) {
+      const suggestions = keywordSuggestions[businessType]
+      setKeywords(suggestions.slice(0, 5))
+    }
+  }, [businessType, step])
 
   // Load persisted data
   useEffect(() => {
@@ -103,10 +106,25 @@ export default function SetupPage() {
     setKeywords(keywords.filter((k) => k !== kw))
   }
 
-  const handleStep1Next = () => {
+  const handleStep1Next = async () => {
     if (!businessName.trim() || !cityState.trim()) return
     saveToLocalStorage()
     setStep(1)
+    setLoadingKeywords(true)
+    try {
+      const res = await fetch('/api/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName, businessType, cityState }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.keywords) && data.keywords.length > 0) {
+          setKeywords(data.keywords)
+        }
+      }
+    } catch {}
+    setLoadingKeywords(false)
   }
 
   const handleStep2Next = () => {
@@ -232,13 +250,24 @@ export default function SetupPage() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Choose your keywords</h1>
               <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">
-                We pre-filled suggestions based on <strong className="text-slate-700 dark:text-slate-300">{businessType}</strong> businesses. Add or remove up to 10.
+                {loadingKeywords
+                  ? <>Generating keywords tailored to <strong className="text-slate-700 dark:text-slate-300">{businessName}</strong>…</>
+                  : <>AI-generated keywords for <strong className="text-slate-700 dark:text-slate-300">{businessName}</strong>. Add or remove up to 10.</>
+                }
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-6">{keywords.length}/10 keywords selected</p>
 
               {/* Keyword chips */}
               <div className="flex flex-wrap gap-2 mb-5 min-h-[2.5rem]">
-                {keywords.map((kw) => (
+                {loadingKeywords ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-1.5 animate-pulse"
+                      style={{ width: `${7 + (i % 3) * 2}rem` }}
+                    />
+                  ))
+                ) : keywords.map((kw) => (
                   <span
                     key={kw}
                     className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-sm px-3 py-1.5 rounded-full"
@@ -258,7 +287,7 @@ export default function SetupPage() {
               </div>
 
               {/* Add keyword input */}
-              {keywords.length < 10 && (
+              {!loadingKeywords && keywords.length < 10 && (
                 <div className="flex gap-2 mb-6">
                   <input
                     type="text"
@@ -292,10 +321,10 @@ export default function SetupPage() {
                 </button>
                 <button
                   onClick={handleStep2Next}
-                  disabled={keywords.length === 0}
+                  disabled={loadingKeywords || keywords.length === 0}
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-colors"
                 >
-                  Continue &rarr;
+                  {loadingKeywords ? 'Generating keywords…' : 'Continue →'}
                 </button>
               </div>
             </div>

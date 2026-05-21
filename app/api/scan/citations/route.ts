@@ -4,9 +4,7 @@ import { checkCitation } from '@/lib/serp'
 
 const CITATION_PLATFORMS = [
   { name: 'Google Business Profile', category: 'Primary', domain: 'business.google.com', url: 'https://business.google.com' },
-  { name: 'Apple Maps', category: 'Primary', domain: 'maps.apple.com', url: 'https://mapsconnect.apple.com' },
   { name: 'Yelp', category: 'Primary', domain: 'yelp.com', url: 'https://biz.yelp.com' },
-  { name: 'Bing Places', category: 'Primary', domain: 'bingplaces.com', url: 'https://www.bingplaces.com' },
   { name: 'Facebook', category: 'Social', domain: 'facebook.com', url: 'https://business.facebook.com' },
   { name: 'Foursquare', category: 'Directory', domain: 'foursquare.com', url: 'https://foursquare.com/add-place' },
   { name: 'Yellow Pages', category: 'Directory', domain: 'yellowpages.com', url: 'https://www.yellowpages.com/add-listing' },

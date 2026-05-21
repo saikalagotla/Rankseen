@@ -1,11 +1,23 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
-export async function POST() {
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRO_PRICE_ID) {
+export async function POST(request: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
   }
+
+  const body = await request.json().catch(() => ({}))
+  const plan: 'starter' | 'pro' = body.plan === 'starter' ? 'starter' : 'pro'
+
+  const priceId = plan === 'starter'
+    ? process.env.STRIPE_STARTER_PRICE_ID
+    : process.env.STRIPE_PRO_PRICE_ID
+
+  if (!priceId) {
+    return NextResponse.json({ error: `STRIPE_${plan.toUpperCase()}_PRICE_ID not configured` }, { status: 503 })
+  }
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -15,12 +27,12 @@ export async function POST() {
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID!, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     customer_email: user.email,
     client_reference_id: user.id,
     success_url: `${origin}/dashboard/upgrade?success=1`,
     cancel_url: `${origin}/dashboard/settings`,
-    metadata: { user_id: user.id },
+    metadata: { user_id: user.id, plan },
   })
 
   return NextResponse.json({ url: session.url })

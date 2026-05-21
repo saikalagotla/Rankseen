@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { StoredReview } from '@/lib/scans'
+import ScanTrigger from '../components/scan-trigger'
 
 type Filter = 'All' | 'Google' | 'Yelp' | '5★' | '4★' | '3★ & below'
 
@@ -45,9 +46,29 @@ function formatDate(iso: string | null) {
 
 type Props = {
   reviews: StoredReview[]
+  googleFallbackUrl?: string | null
+  yelpFallbackUrl?: string | null
+  googleSyncLabel?: string
+  googleSyncDisabled?: boolean
+  yelpSyncLabel?: string
+  yelpSyncDisabled?: boolean
 }
 
-export default function ReviewsClient({ reviews }: Props) {
+export default function ReviewsClient({
+  reviews,
+  googleFallbackUrl = null,
+  yelpFallbackUrl = null,
+  googleSyncLabel = 'Sync Google',
+  googleSyncDisabled = false,
+  yelpSyncLabel = 'Sync Yelp',
+  yelpSyncDisabled = false,
+}: Props) {
+  function reviewUrl(r: StoredReview) {
+    if (r.url) return r.url
+    if (r.source === 'google') return googleFallbackUrl
+    if (r.source === 'yelp') return yelpFallbackUrl
+    return null
+  }
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>('All')
   const [drafting, setDrafting] = useState<string | null>(null)
@@ -109,9 +130,15 @@ export default function ReviewsClient({ reviews }: Props) {
   if (totalReviews === 0) {
     return (
       <div className="p-8 max-w-6xl mx-auto w-full">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reviews</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor and respond to customer reviews</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reviews</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor and respond to customer reviews</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ScanTrigger endpoint="/api/scan/reviews?source=google" label={googleSyncLabel} disabled={googleSyncDisabled} />
+            <ScanTrigger endpoint="/api/scan/reviews?source=yelp" label={yelpSyncLabel} disabled={yelpSyncDisabled} />
+          </div>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 flex flex-col items-center text-center gap-3">
           <svg className="w-12 h-12 text-slate-200 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,7 +146,7 @@ export default function ReviewsClient({ reviews }: Props) {
           </svg>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">No reviews yet</p>
           <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm">
-            Reviews will appear here once synced. Google Places and Yelp API integration is coming — for now, reviews can be added via the Supabase dashboard.
+            Use the sync buttons above to pull in your latest Google and Yelp reviews.
           </p>
         </div>
       </div>
@@ -133,6 +160,10 @@ export default function ReviewsClient({ reviews }: Props) {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reviews</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor and respond to customer reviews · {totalReviews} total</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ScanTrigger endpoint="/api/scan/reviews?source=google" label={googleSyncLabel} disabled={googleSyncDisabled} />
+          <ScanTrigger endpoint="/api/scan/reviews?source=yelp" label={yelpSyncLabel} disabled={yelpSyncDisabled} />
         </div>
       </div>
 
@@ -241,12 +272,24 @@ export default function ReviewsClient({ reviews }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => { setDrafting(r.id); setDraftText('') }}
-                      className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
-                    >
-                      Draft reply →
-                    </button>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={() => { setDrafting(r.id); setDraftText('') }}
+                        className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                      >
+                        Draft reply →
+                      </button>
+                      {reviewUrl(r) && (
+                        <a
+                          href={reviewUrl(r)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline"
+                        >
+                          View on {source} ↗
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               )
@@ -331,13 +374,35 @@ export default function ReviewsClient({ reviews }: Props) {
                           </div>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => { setDrafting(r.id); setDraftText('') }}
-                          className="text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                        >
-                          Draft reply →
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => { setDrafting(r.id); setDraftText('') }}
+                            className="text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                          >
+                            Draft reply →
+                          </button>
+                          {reviewUrl(r) && (
+                            <a
+                              href={reviewUrl(r)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline transition-colors"
+                            >
+                              View on {source} ↗
+                            </a>
+                          )}
+                        </div>
                       )
+                    )}
+                    {r.replied && reviewUrl(r) && (
+                      <a
+                        href={reviewUrl(r)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:underline transition-colors"
+                      >
+                        View on {source} ↗
+                      </a>
                     )}
                   </div>
                 </div>

@@ -5,6 +5,8 @@ import {
   generateAIQueries,
   checkPerplexity,
   checkClaude,
+  checkChatGPT,
+  checkBingCopilot,
   checkGoogleAIOverview,
   type AICheckResult,
 } from '@/lib/ai-checks'
@@ -24,7 +26,9 @@ export async function POST() {
   const serpApiKey = process.env.SERP_API_KEY
   const scanWeek = getWeekStart(new Date())
   const bizName = profile.business_name ?? profile.business_type
-  const queries = generateAIQueries(profile.business_type, profile.city_state)
+  const queries = profile.keywords?.length
+    ? profile.keywords
+    : generateAIQueries(profile.business_type, profile.city_state)
 
   // Engines available (Pro gates ChatGPT, Bing to paid plan)
   const engines: Array<{ name: string; runner: EngineRunner; requiresKey: string }> = [
@@ -38,11 +42,23 @@ export async function POST() {
       runner: (q, b) => checkClaude(q, b),
       requiresKey: 'ANTHROPIC_API_KEY',
     },
-    ...(serpApiKey ? [{
-      name: 'google_ai',
-      runner: (q: string, b: string) => checkGoogleAIOverview(q, b, serpApiKey),
-      requiresKey: 'SERP_API_KEY',
-    }] : []),
+    {
+      name: 'chatgpt',
+      runner: (q, b) => checkChatGPT(q, b),
+      requiresKey: 'OPENAI_API_KEY',
+    },
+    ...(serpApiKey ? [
+      {
+        name: 'google_ai',
+        runner: (q: string, b: string) => checkGoogleAIOverview(q, b, serpApiKey),
+        requiresKey: 'SERP_API_KEY',
+      },
+      {
+        name: 'bing',
+        runner: (q: string, b: string) => checkBingCopilot(q, b, serpApiKey),
+        requiresKey: 'SERP_API_KEY',
+      },
+    ] : []),
   ]
 
   const rows: Array<{
@@ -52,6 +68,15 @@ export async function POST() {
     mentioned: boolean
     position: number | null
     excerpt: string | null
+    scan_week: string
+  }> = []
+
+  const competitorRows: Array<{
+    user_id: string
+    engine: string
+    query: string
+    competitor_name: string
+    position: number
     scan_week: string
   }> = []
 
@@ -74,6 +99,19 @@ export async function POST() {
         excerpt: r.status === 'fulfilled' ? r.value.excerpt : null,
         scan_week: scanWeek,
       })
+
+      if (r.status === 'fulfilled') {
+        for (const comp of r.value.competitors) {
+          competitorRows.push({
+            user_id: user.id,
+            engine: engine.name,
+            query: queries[i],
+            competitor_name: comp.name,
+            position: comp.position,
+            scan_week: scanWeek,
+          })
+        }
+      }
     }
   }
 
@@ -93,6 +131,16 @@ export async function POST() {
 
   const { error } = await supabase.from('ai_visibility_results').insert(rows)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  await supabase
+    .from('ai_competitor_snapshots')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('scan_week', scanWeek)
+
+  if (competitorRows.length > 0) {
+    await supabase.from('ai_competitor_snapshots').insert(competitorRows)
+  }
 
   const mentioned = rows.filter(r => r.mentioned).length
   return Response.json({ success: true, total: rows.length, mentioned })

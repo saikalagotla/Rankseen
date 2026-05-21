@@ -59,7 +59,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
   const [keywordSaving, setKeywordSaving] = useState(false)
 
   const [signingOut, setSigningOut] = useState(false)
-  const [upgrading, setUpgrading] = useState(false)
+  const [upgrading, setUpgrading] = useState<'starter' | 'pro' | false>(false)
   const [upgradeError, setUpgradeError] = useState('')
 
   async function handleSave() {
@@ -115,11 +115,15 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
     await persistKeywords(next)
   }
 
-  async function handleUpgrade() {
-    setUpgrading(true)
+  async function handleUpgrade(plan: 'starter' | 'pro') {
+    setUpgrading(plan)
     setUpgradeError('')
     try {
-      const res = await fetch('/api/checkout', { method: 'POST' })
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
       const { url, error } = await res.json()
       if (error) throw new Error(error)
       window.location.href = url
@@ -289,35 +293,81 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
           title="Plan &amp; Billing"
           description="Your current plan and upgrade options."
         />
-        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-sm font-bold text-slate-900 dark:text-white capitalize">{profile?.plan ?? 'Solo'} plan</span>
-              <span className="text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">Active</span>
+        {(() => {
+          const currentPlan = profile?.plan ?? 'free'
+          const planRank = { free: 0, solo: 0, starter: 1, pro: 2 } as Record<string, number>
+          const current = planRank[currentPlan] ?? 0
+
+          const plans = [
+            {
+              key: 'free',
+              label: 'Free',
+              price: '$0',
+              features: '3 keywords · 2 AI engines · Basic scan',
+            },
+            {
+              key: 'starter',
+              label: 'Starter',
+              price: '$19',
+              features: '10 keywords · 3 AI engines · Basic reports',
+              highlighted: true,
+            },
+            {
+              key: 'pro',
+              label: 'Pro',
+              price: '$49',
+              features: 'Unlimited keywords · All 5 AI engines · Growth Advisor',
+            },
+          ] as const
+
+          return (
+            <div className="flex flex-col gap-3">
+              {plans.map(p => {
+                const rank = planRank[p.key] ?? 0
+                const isActive = p.key === currentPlan || (currentPlan === 'solo' && p.key === 'free')
+                const canUpgrade = rank > current
+
+                return (
+                  <div
+                    key={p.key}
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-colors
+                      ${isActive
+                        ? 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-100 dark:border-slate-800'
+                      }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">{p.label}</span>
+                        {isActive && (
+                          <span className="text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">Active</span>
+                        )}
+                        {!isActive && ('highlighted' in p) && (
+                          <span className="text-xs font-semibold bg-emerald-500 text-white px-2 py-0.5 rounded-full">Popular</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{p.features}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-4">
+                      <p className="text-lg font-bold text-slate-900 dark:text-white">
+                        {p.price}<span className="text-sm font-normal text-slate-400">/mo</span>
+                      </p>
+                      {canUpgrade && (
+                        <button
+                          onClick={() => handleUpgrade(p.key as 'starter' | 'pro')}
+                          disabled={upgrading === p.key}
+                          className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-50"
+                        >
+                          {upgrading === p.key ? 'Redirecting…' : 'Upgrade →'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Free · 10 keywords · 2 AI engines · Basic citation scan</p>
-          </div>
-          <span className="text-lg font-bold text-slate-900 dark:text-white">$0<span className="text-sm font-normal text-slate-400">/mo</span></span>
-        </div>
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-sm font-bold text-slate-900 dark:text-white">Pro plan</span>
-              <span className="text-xs font-semibold bg-emerald-500 text-white px-2 py-0.5 rounded-full">Recommended</span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Unlimited keywords · All 5 AI engines · Weekly reports · Priority support</p>
-          </div>
-          <div className="text-right shrink-0 ml-4">
-            <p className="text-lg font-bold text-slate-900 dark:text-white">$29<span className="text-sm font-normal text-slate-400">/mo</span></p>
-            <button
-              onClick={handleUpgrade}
-              disabled={upgrading}
-              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-50"
-            >
-              {upgrading ? 'Redirecting…' : 'Upgrade →'}
-            </button>
-          </div>
-        </div>
+          )
+        })()}
         {upgradeError && (
           <p className="mt-3 text-xs text-red-500 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-lg px-3.5 py-2.5">
             {upgradeError}

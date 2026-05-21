@@ -38,7 +38,14 @@ export default function Nav() {
           <ThemeToggle />
 
           {meta ? (
-            <div className="relative ml-1">
+            <div className="flex items-center gap-2 ml-1">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-all hover:shadow-md hover:shadow-emerald-500/20 active:scale-95"
+              >
+                Dashboard
+              </Link>
+            <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-all"
@@ -82,6 +89,7 @@ export default function Nav() {
                   </div>
                 </>
               )}
+            </div>
             </div>
           ) : (
             <>

@@ -23,6 +23,21 @@ export type CitationSnapshot = {
   scan_date: string
 }
 
+export type CompetitorSnapshot = {
+  keyword: string
+  position: number
+  competitor_name: string
+  scan_week: string
+}
+
+export type AICompetitorSnapshot = {
+  engine: string
+  query: string
+  competitor_name: string
+  position: number
+  scan_week: string
+}
+
 export type StoredReview = {
   id: string
   source: string
@@ -32,6 +47,7 @@ export type StoredReview = {
   published_at: string | null
   replied: boolean
   reply_text: string | null
+  url: string | null
 }
 
 export async function getRankSnapshots(userId: string, weeksBack = 8): Promise<RankSnapshot[]> {
@@ -94,12 +110,58 @@ export async function getReviews(userId: string, limit = 20): Promise<StoredRevi
   const supabase = await createClient()
   const { data } = await supabase
     .from('reviews')
-    .select('id, source, author, rating, body, published_at, replied, reply_text')
+    .select('id, source, author, rating, body, published_at, replied, reply_text, url')
     .eq('user_id', userId)
     .order('published_at', { ascending: false })
     .limit(limit)
 
   return (data ?? []) as StoredReview[]
+}
+
+export async function getLatestCompetitors(userId: string): Promise<CompetitorSnapshot[]> {
+  const supabase = await createClient()
+
+  const { data: latest } = await supabase
+    .from('competitor_snapshots')
+    .select('scan_week')
+    .eq('user_id', userId)
+    .order('scan_week', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!latest) return []
+
+  const { data } = await supabase
+    .from('competitor_snapshots')
+    .select('keyword, position, competitor_name, scan_week')
+    .eq('user_id', userId)
+    .eq('scan_week', latest.scan_week)
+    .order('position', { ascending: true })
+
+  return (data ?? []) as CompetitorSnapshot[]
+}
+
+export async function getLatestAICompetitors(userId: string): Promise<AICompetitorSnapshot[]> {
+  const supabase = await createClient()
+
+  const { data: latest } = await supabase
+    .from('ai_competitor_snapshots')
+    .select('scan_week')
+    .eq('user_id', userId)
+    .order('scan_week', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!latest) return []
+
+  const { data } = await supabase
+    .from('ai_competitor_snapshots')
+    .select('engine, query, competitor_name, position, scan_week')
+    .eq('user_id', userId)
+    .eq('scan_week', latest.scan_week)
+    .order('position', { ascending: true })
+
+  return (data ?? []) as AICompetitorSnapshot[]
 }
 
 export async function updateReviewReply(
