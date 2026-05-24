@@ -7,6 +7,7 @@ import ScanTrigger from './components/scan-trigger'
 import UpgradeButton from './components/upgrade-button'
 import GrowthAdvisor from './components/growth-advisor'
 import ShareLinkButton from './components/share-link-button'
+import Link from 'next/link'
 
 function ChangeChip({ dir, change }: { dir: string; change: number }) {
   if (dir === 'flat') {
@@ -26,26 +27,86 @@ type DigestItem = {
   link?: { label: string; href: string; checkout?: boolean }
 }
 
+const DEMO_SNAPSHOTS = [
+  { keyword: 'barbershop near me Austin', rank: 3, scan_week: '2026-05-19' },
+  { keyword: 'barbershop near me Austin', rank: 5, scan_week: '2026-05-12' },
+  { keyword: 'best barbershop Austin TX', rank: 7, scan_week: '2026-05-19' },
+  { keyword: 'best barbershop Austin TX', rank: 7, scan_week: '2026-05-12' },
+  { keyword: 'mens haircut Austin', rank: 12, scan_week: '2026-05-19' },
+  { keyword: 'mens haircut Austin', rank: 14, scan_week: '2026-05-12' },
+]
+
+const DEMO_AI_RESULTS = [
+  { engine: 'perplexity', mentioned: true },
+  { engine: 'google_ai', mentioned: true },
+  { engine: 'claude', mentioned: false },
+  { engine: 'chatgpt', mentioned: true },
+  { engine: 'bing', mentioned: false },
+]
+
+const DEMO_CITATIONS = [
+  { platform: 'Google', status: 'ok', issue: null },
+  { platform: 'Yelp', status: 'warn', issue: 'Phone number format differs — update to match Google.' },
+  { platform: 'Facebook', status: 'ok', issue: null },
+  { platform: 'Foursquare', status: 'warn', issue: 'Address abbreviation mismatch.' },
+  { platform: 'TripAdvisor', status: 'ok', issue: null },
+  { platform: 'YellowPages', status: 'not_listed', issue: null },
+]
+
+const DEMO_REVIEWS = [
+  { id: '1', author: 'Marcus T.', rating: 5, body: 'Best haircut I\'ve had in years. Attention to detail is unreal.', source: 'google', replied: true },
+  { id: '2', author: 'Sarah K.', rating: 4, body: 'Great atmosphere and skilled barbers — will definitely come back.', source: 'yelp', replied: false },
+  { id: '3', author: 'James R.', rating: 5, body: 'Always consistent, always on time. My go-to spot.', source: 'google', replied: true },
+]
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const isDemo = !user
 
-  const [profile, snapshots, aiResults, citations, reviews] = await Promise.all([
-    getProfile(),
-    getRankSnapshots(user.id, 2),
-    getLatestAIVisibility(user.id),
-    getLatestCitations(user.id),
-    getReviews(user.id, 3),
-  ])
+  let snapshots: typeof DEMO_SNAPSHOTS
+  let aiResults: typeof DEMO_AI_RESULTS
+  let citations: typeof DEMO_CITATIONS
+  let reviews: typeof DEMO_REVIEWS
+  let bizName: string
+  let bizType: string
+  let cityState: string
+  let userPlan: string
+  let userPlanRank: number
+  let previewToken: string | null = null
 
-  if (!profile?.business_name) redirect('/onboarding')
+  if (isDemo) {
+    snapshots = DEMO_SNAPSHOTS
+    aiResults = DEMO_AI_RESULTS
+    citations = DEMO_CITATIONS
+    reviews = DEMO_REVIEWS
+    bizName = 'The Craft Barbershop'
+    bizType = 'Barbershop'
+    cityState = 'Austin, TX'
+    userPlan = 'pro'
+    userPlanRank = 2
+  } else {
+    const [profile, snapshotData, aiData, citationData, reviewData] = await Promise.all([
+      getProfile(),
+      getRankSnapshots(user!.id, 2),
+      getLatestAIVisibility(user!.id),
+      getLatestCitations(user!.id),
+      getReviews(user!.id, 3),
+    ])
 
-  const bizName = profile.business_name
-  const bizType = profile.business_type ?? 'Business'
-  const cityState = profile.city_state ?? ''
-  const userPlan = profile.plan ?? 'free'
-  const userPlanRank = { free: 0, solo: 0, starter: 1, pro: 2 }[userPlan] ?? 0
+    if (!profile?.business_name) redirect('/onboarding')
+
+    snapshots = snapshotData as typeof DEMO_SNAPSHOTS
+    aiResults = aiData as typeof DEMO_AI_RESULTS
+    citations = citationData as typeof DEMO_CITATIONS
+    reviews = reviewData as typeof DEMO_REVIEWS
+    bizName = profile.business_name
+    bizType = profile.business_type ?? 'Business'
+    cityState = profile.city_state ?? ''
+    userPlan = profile.plan ?? 'free'
+    userPlanRank = { free: 0, solo: 0, starter: 1, pro: 2 }[userPlan] ?? 0
+    previewToken = profile.preview_token ?? null
+  }
 
   // --- Maps rank summary ---
   const byKeyword = new Map<string, { rank: number | null; scan_week: string }[]>()
@@ -63,20 +124,14 @@ export default async function DashboardPage() {
   })
 
   const rankedKws = keywordSummaries.filter(k => k.rank !== null)
-  const bestRank = rankedKws.length
-    ? Math.min(...rankedKws.map(k => k.rank!))
-    : null
+  const bestRank = rankedKws.length ? Math.min(...rankedKws.map(k => k.rank!)) : null
   const avgRank = rankedKws.length
     ? Math.round(rankedKws.reduce((a, k) => a + k.rank!, 0) / rankedKws.length)
     : null
   const mapsImprovedCount = keywordSummaries.filter(k => k.dir === 'up').length
-  const lastWeek = snapshots[0]?.scan_week
 
   // --- AI visibility summary ---
-  const aiEngines = ['perplexity', 'google_ai', 'claude', 'chatgpt', 'bing']
-  const visibleEngines = new Set(
-    aiResults.filter(r => r.mentioned).map(r => r.engine)
-  )
+  const visibleEngines = new Set(aiResults.filter(r => r.mentioned).map(r => r.engine))
   const totalEngines = 5
   const unlockedEngines = userPlan === 'pro' ? 5 : userPlan === 'starter' ? 3 : 2
   const visibleCount = visibleEngines.size
@@ -100,7 +155,6 @@ export default async function DashboardPage() {
   // --- Generate weekly digest items ---
   const digestItems: DigestItem[] = []
 
-  // Rank movement
   const bigImprover = keywordSummaries.find(k => k.dir === 'up' && k.change >= 2)
   if (bigImprover && snapshots.length > 0) {
     digestItems.push({
@@ -135,7 +189,6 @@ export default async function DashboardPage() {
     })
   }
 
-  // Citation issue
   const citationWarn = autoCitations.find(c => c.status === 'warn')
   if (citationWarn) {
     digestItems.push({
@@ -156,7 +209,6 @@ export default async function DashboardPage() {
     })
   }
 
-  // AI visibility or upgrade hook
   if (aiResults.length > 0) {
     const unmentionedEngine = ['claude', 'chatgpt', 'bing'].find(e =>
       aiResults.some(r => r.engine === e) && !visibleEngines.has(e)
@@ -205,7 +257,6 @@ export default async function DashboardPage() {
     })
   }
 
-  // Keep exactly 3 digest items
   const digest = digestItems.slice(0, 3)
 
   const today = new Date()
@@ -213,6 +264,22 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
+      {/* Demo banner */}
+      {isDemo && (
+        <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">You&rsquo;re viewing a demo dashboard</p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">Sign up free to track your own business — no credit card required.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/login" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">Sign in</Link>
+            <Link href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors">
+              Start free →
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -222,10 +289,12 @@ export default async function DashboardPage() {
           </div>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{cityState} &middot; {weekLabel}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {profile?.preview_token && <ShareLinkButton token={profile.preview_token} />}
-          <ScanTrigger endpoint="/api/scan/maps" label="Scan Maps" disabled={!process.env.SERP_API_KEY} variant="button" />
-        </div>
+        {!isDemo && (
+          <div className="flex items-center gap-2">
+            {previewToken && <ShareLinkButton token={previewToken} />}
+            <ScanTrigger endpoint="/api/scan/maps" label="Scan Maps" disabled={!process.env.SERP_API_KEY} variant="button" />
+          </div>
+        )}
       </div>
 
       {/* Score cards */}
@@ -303,12 +372,12 @@ export default async function DashboardPage() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Google Maps Rankings</h2>
-            <a href="/dashboard/maps" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">View all →</a>
+            {!isDemo && <a href="/dashboard/maps" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">View all →</a>}
           </div>
           {keywordSummaries.length === 0 ? (
             <div className="px-6 py-8 text-center">
               <p className="text-sm text-slate-400 dark:text-slate-500 mb-2">No rank data yet.</p>
-              <a href="/dashboard/maps" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Run a scan →</a>
+              {!isDemo && <a href="/dashboard/maps" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Run a scan →</a>}
             </div>
           ) : (
             <table className="w-full">
@@ -353,14 +422,14 @@ export default async function DashboardPage() {
                 {citationIssues} issue{citationIssues > 1 ? 's' : ''}
               </span>
             )}
-            {autoCitations.length === 0 && (
+            {autoCitations.length === 0 && !isDemo && (
               <a href="/dashboard/citations" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">Scan →</a>
             )}
           </div>
           {autoCitations.length === 0 ? (
             <div className="px-6 py-8 text-center">
               <p className="text-sm text-slate-400 dark:text-slate-500 mb-2">No citation data yet.</p>
-              <a href="/dashboard/citations" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Run a citation scan →</a>
+              {!isDemo && <a href="/dashboard/citations" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Run a citation scan →</a>}
             </div>
           ) : (
             <div className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -422,7 +491,7 @@ export default async function DashboardPage() {
                   <span className={`w-6 h-6 rounded-full font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeCls}`}>{i + 1}</span>
                   <div>
                     <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed">{item.text}</p>
-                    {item.link && (
+                    {item.link && !isDemo && (
                       item.link.checkout
                         ? <span className="mt-1.5 block"><UpgradeButton label={item.link.label} variant="link" /></span>
                         : <a href={item.link.href} className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1.5 hover:underline">
@@ -446,16 +515,18 @@ export default async function DashboardPage() {
               <h2 className="font-semibold text-slate-900 dark:text-white text-sm">AI Visibility</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">When customers ask AI assistants for {bizType.toLowerCase()}s in {cityState.split(',')[0] || 'your city'}, are you recommended?</p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <a href="/dashboard/ai" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Full report →</a>
-              {userPlan !== 'pro' && (
-                <UpgradeButton
-                  label={userPlanRank === 0 ? 'Upgrade' : 'Go Pro'}
-                  variant="small"
-                  plan={userPlanRank === 0 ? 'starter' : 'pro'}
-                />
-              )}
-            </div>
+            {!isDemo && (
+              <div className="flex items-center gap-2 shrink-0">
+                <a href="/dashboard/ai" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Full report →</a>
+                {userPlan !== 'pro' && (
+                  <UpgradeButton
+                    label={userPlanRank === 0 ? 'Upgrade' : 'Go Pro'}
+                    variant="small"
+                    plan={userPlanRank === 0 ? 'starter' : 'pro'}
+                  />
+                )}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-3 lg:grid-cols-5 divide-x divide-y divide-slate-100 dark:divide-slate-800">
             {(['perplexity', 'google_ai', 'claude', 'chatgpt', 'bing'] as const).map((engine) => {
@@ -503,15 +574,28 @@ export default async function DashboardPage() {
         </div>
 
         {/* Growth Advisor */}
-        <GrowthAdvisor />
+        {isDemo ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <p className="font-semibold text-slate-900 dark:text-white text-sm">Growth Advisor</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">AI-powered action plans personalised to your business. Sign up to unlock.</p>
+            <Link href="/setup" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Get started free →</Link>
+          </div>
+        ) : (
+          <GrowthAdvisor />
+        )}
       </div>
 
-      {/* Row 4: Recent Reviews — 3-col horizontal */}
+      {/* Row 4: Recent Reviews */}
       {reviews.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Recent Reviews</h2>
-            <a href="/dashboard/reviews" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">View all →</a>
+            {!isDemo && <a href="/dashboard/reviews" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">View all →</a>}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3">
             {reviews.map((review, idx) => (
@@ -542,7 +626,7 @@ export default async function DashboardPage() {
                       <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-2">&ldquo;{review.body}&rdquo;</p>
                     )}
                   </div>
-                  {!review.replied && (
+                  {!review.replied && !isDemo && (
                     <a
                       href="/dashboard/reviews"
                       className="shrink-0 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"

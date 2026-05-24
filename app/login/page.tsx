@@ -2,18 +2,27 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from '../components/theme-toggle'
 
+type Mode = 'signin' | 'signup'
+
 export default function LoginPage() {
+  const [mode, setMode] = useState<Mode>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const searchParams = useSearchParams()
+  const router = useRouter()
   const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
-  const error = searchParams.get('error')
+  const urlError = searchParams.get('error')
 
   async function handleGoogleSignIn() {
     setLoading(true)
+    setError(null)
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -23,12 +32,42 @@ export default function LoginPage() {
     })
   }
 
+  async function handleEmailSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setSuccessMsg(null)
+    const supabase = createClient()
+
+    if (mode === 'signin') {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        router.push(callbackUrl)
+      }
+    } else {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${callbackUrl}` },
+      })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        setSuccessMsg('Check your email for a confirmation link.')
+        setLoading(false)
+      }
+    }
+  }
+
   return (
     <div
       className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-300"
       style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}
     >
-      {/* Top bar */}
       <header className="px-6 h-14 flex items-center justify-between">
         <Link href="/" className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
           Spotted<span className="text-emerald-500">HQ</span>
@@ -39,7 +78,6 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm animate-fade-in-up">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
-            {/* Icon */}
             <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl flex items-center justify-center mb-6">
               <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -47,16 +85,58 @@ export default function LoginPage() {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Sign in to SpottedHQ</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              {mode === 'signin' ? 'Sign in to SpottedHQ' : 'Create your account'}
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
               Track your Google Maps rank, AI visibility, and citation health.
             </p>
 
-            {error && (
-              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-xl px-4 py-3 mb-6">
-                Sign-in failed. Please try again.
+            {(urlError || error) && (
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-xl px-4 py-3 mb-5">
+                {error ?? 'Sign-in failed. Please try again.'}
               </div>
             )}
+
+            {successMsg && (
+              <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm rounded-xl px-4 py-3 mb-5">
+                {successMsg}
+              </div>
+            )}
+
+            {/* Email/password form */}
+            <form onSubmit={handleEmailSubmit} className="flex flex-col gap-3 mb-4">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm py-3 px-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+              </button>
+            </form>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <span className="text-xs text-slate-400">or</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+            </div>
 
             <button
               onClick={handleGoogleSignIn}
@@ -71,10 +151,26 @@ export default function LoginPage() {
               ) : (
                 <GoogleIcon />
               )}
-              {loading ? 'Redirecting…' : 'Continue with Google'}
+              Continue with Google
             </button>
 
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-6">
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-5">
+              {mode === 'signin' ? (
+                <>No account?{' '}
+                  <button onClick={() => { setMode('signup'); setError(null); setSuccessMsg(null) }} className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline">
+                    Sign up
+                  </button>
+                </>
+              ) : (
+                <>Already have an account?{' '}
+                  <button onClick={() => { setMode('signin'); setError(null); setSuccessMsg(null) }} className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline">
+                    Sign in
+                  </button>
+                </>
+              )}
+            </p>
+
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-3">
               By continuing, you agree to our{' '}
               <span className="underline cursor-pointer">Terms</span> and{' '}
               <span className="underline cursor-pointer">Privacy Policy</span>.
