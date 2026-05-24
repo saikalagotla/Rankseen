@@ -6,6 +6,7 @@ import ScoreCard from '../components/score-card'
 import ScanTrigger from './components/scan-trigger'
 import UpgradeButton from './components/upgrade-button'
 import GrowthAdvisor from './components/growth-advisor'
+import ShareLinkButton from './components/share-link-button'
 
 function ChangeChip({ dir, change }: { dir: string; change: number }) {
   if (dir === 'flat') {
@@ -222,6 +223,7 @@ export default async function DashboardPage() {
           <p className="text-slate-500 dark:text-slate-400 text-sm">{cityState} &middot; {weekLabel}</p>
         </div>
         <div className="flex items-center gap-2">
+          {profile?.preview_token && <ShareLinkButton token={profile.preview_token} />}
           <ScanTrigger endpoint="/api/scan/maps" label="Scan Maps" disabled={!process.env.SERP_API_KEY} variant="button" />
         </div>
       </div>

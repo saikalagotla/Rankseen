@@ -90,13 +90,15 @@ export async function POST() {
 
     for (let i = 0; i < queries.length; i++) {
       const r = queryResults[i]
+      const result = r.status === 'fulfilled' ? r.value : null
       rows.push({
         user_id: user.id,
         engine: engine.name,
         query: queries[i],
-        mentioned: r.status === 'fulfilled' ? r.value.mentioned : false,
-        position: r.status === 'fulfilled' ? r.value.position : null,
-        excerpt: r.status === 'fulfilled' ? r.value.excerpt : null,
+        mentioned: result?.mentioned ?? false,
+        position: result?.position ?? null,
+        // sentinel: '__not_triggered__' means the AI overview didn't appear (google_ai only)
+        excerpt: result?.triggered === false ? '__not_triggered__' : (result?.excerpt ?? null),
         scan_week: scanWeek,
       })
 

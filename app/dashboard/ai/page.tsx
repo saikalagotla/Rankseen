@@ -56,7 +56,7 @@ function buildGeoTips(params: {
   // Tip 2: engine-specific gap
   const unlockedMissing = engines.filter(e => !e.isLocked && e.hasResults && e.mentionCount === 0)
   const googleMissing = unlockedMissing.find(e => e.key === 'google_ai')
-  const llmMissing = unlockedMissing.filter(e => ['claude', 'chatgpt', 'perplexity'].includes(e.key))
+  const llmMissing = unlockedMissing.filter(e => ['claude', 'chatgpt'].includes(e.key))
 
   if (googleMissing) {
     tips.push({
@@ -131,7 +131,7 @@ export default async function AIVisibilityPage() {
     byEngine.get(r.engine)!.push(r)
   }
 
-  const engineOrder = ['perplexity', 'google_ai', 'claude', 'chatgpt', 'bing']
+  const engineOrder = ['chatgpt', 'google_ai', 'bing', 'claude']
 
   // Build engine summary rows
   const engines = engineOrder.map(key => {
@@ -306,6 +306,13 @@ export default async function AIVisibilityPage() {
                             </svg>
                             {q.position ? `#${q.position} result` : 'Mentioned'}
                           </span>
+                        ) : q.excerpt === '__not_triggered__' ? (
+                          <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500" title="Google didn't show an AI Overview for this query — it showed the Maps local pack instead.">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                            Not triggered
+                          </span>
                         ) : (
                           <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -373,7 +380,7 @@ export default async function AIVisibilityPage() {
           .slice(0, 8)
 
         const ENGINE_LABELS: Record<string, string> = {
-          perplexity: 'Perplexity', google_ai: 'Google AI', claude: 'Claude', chatgpt: 'ChatGPT', bing: 'Bing',
+          google_ai: 'Google AI', claude: 'Claude', chatgpt: 'ChatGPT', bing: 'Bing',
         }
 
         const byEngineComp = new Map<string, typeof aiCompetitors>()

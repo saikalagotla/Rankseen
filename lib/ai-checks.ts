@@ -3,6 +3,7 @@ export interface AICheckResult {
   position: number | null
   excerpt: string | null
   competitors: Array<{ name: string; position: number }>
+  triggered?: boolean  // false = AI overview didn't appear for this query (google_ai only)
 }
 
 export function generateAIQueries(businessType: string, cityState: string): string[] {
@@ -168,9 +169,8 @@ export async function checkBingCopilot(
 ): Promise<AICheckResult> {
   const params = new URLSearchParams({
     api_key: serpApiKey,
-    engine: 'bing',
+    engine: 'bing_copilot',
     q: query,
-    count: '10',
   })
 
   const res = await fetch(`https://serpapi.com/search.json?${params}`, {
@@ -181,21 +181,16 @@ export async function checkBingCopilot(
 
   const data = await res.json()
 
-  // Prefer AI-generated answer box over organic results
-  const aiAnswer =
-    data.answer_box?.snippet ??
-    data.answer_box?.answer ??
-    data.knowledge_graph?.description ??
-    ''
+  // Concatenate header + all text block snippets into one string to search against
+  const blocks: string[] = []
+  if (data.header) blocks.push(data.header)
+  for (const block of data.text_blocks ?? []) {
+    if (block.snippet) blocks.push(block.snippet)
+    if (Array.isArray(block.list)) blocks.push(block.list.join('\n'))
+  }
 
-  if (aiAnswer) return parseMention(aiAnswer, businessName)
-
-  // Fall back to top organic snippets
-  const organic: Array<{ title?: string; snippet?: string }> = data.organic_results ?? []
-  const combined = organic
-    .slice(0, 5)
-    .map(r => `${r.title ?? ''} ${r.snippet ?? ''}`)
-    .join('\n')
+  const combined = blocks.join('\n')
+  if (!combined) return { mentioned: false, position: null, excerpt: null, competitors: [] }
 
   return parseMention(combined, businessName)
 }
@@ -228,7 +223,7 @@ export async function checkGoogleAIOverview(
     data.answer_box?.snippet ??
     ''
 
-  if (!aiOverview) return { mentioned: false, position: null, excerpt: null, competitors: [] }
+  if (!aiOverview) return { mentioned: false, triggered: false, position: null, excerpt: null, competitors: [] }
 
-  return parseMention(aiOverview, businessName)
+  return { ...parseMention(aiOverview, businessName), triggered: true }
 }
