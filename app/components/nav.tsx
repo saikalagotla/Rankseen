@@ -27,7 +27,7 @@ export default function Nav() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Rank<span className="text-emerald-500">Seen</span>
+            Spotted<span className="text-emerald-500">HQ</span>
           </span>
         </Link>
 

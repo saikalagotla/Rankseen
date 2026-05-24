@@ -142,7 +142,7 @@ export default function SetupPage() {
       {/* Top bar */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 h-14 flex items-center justify-between">
         <Link href="/" className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-          Rank<span className="text-emerald-500">Seen</span>
+          Spotted<span className="text-emerald-500">HQ</span>
         </Link>
         <span className="text-sm text-slate-400 dark:text-slate-500">Setup · Step {step + 1} of 3</span>
       </header>
