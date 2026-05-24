@@ -9,7 +9,7 @@ type Action = {
   impact: 'high' | 'medium' | 'low'
 }
 
-const CACHE_KEY = 'rankseen_action_plan'
+const CACHE_KEY = 'spottedhq_action_plan'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
 function loadCached(): Action[] | null {

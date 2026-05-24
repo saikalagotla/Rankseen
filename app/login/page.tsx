@@ -31,7 +31,7 @@ export default function LoginPage() {
       {/* Top bar */}
       <header className="px-6 h-14 flex items-center justify-between">
         <Link href="/" className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-          Rank<span className="text-emerald-500">Seen</span>
+          Spotted<span className="text-emerald-500">HQ</span>
         </Link>
         <ThemeToggle />
       </header>
@@ -47,7 +47,7 @@ export default function LoginPage() {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Sign in to RankSeen</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Sign in to SpottedHQ</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
               Track your Google Maps rank, AI visibility, and citation health.
             </p>

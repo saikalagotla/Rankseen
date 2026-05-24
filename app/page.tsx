@@ -130,7 +130,7 @@ export default async function LandingPage() {
           <AnimateOnScroll className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Everything you need to grow local</h2>
             <p className="text-lg text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-              Stop paying agencies for reports you don&apos;t understand. RankSeen shows you exactly what matters, in plain English.
+              Stop paying agencies for reports you don&apos;t understand. SpottedHQ shows you exactly what matters, in plain English.
             </p>
           </AnimateOnScroll>
           <div className="grid md:grid-cols-3 gap-8">
@@ -160,11 +160,11 @@ export default async function LandingPage() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-left max-w-2xl mx-auto shadow-2xl shadow-black/20">
               <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100 dark:border-slate-800">
                 <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950 rounded-full flex items-center justify-center">
-                  <span className="text-emerald-700 dark:text-emerald-400 font-bold text-sm">RS</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold text-sm">SH</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm">RankSeen Weekly</p>
-                  <p className="text-xs text-slate-400">hello@rankseen.com &middot; Mon 7:00 AM</p>
+                  <p className="font-semibold text-slate-900 dark:text-white text-sm">SpottedHQ Weekly</p>
+                  <p className="text-xs text-slate-400">hello@spottedhq.com &middot; Mon 7:00 AM</p>
                 </div>
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Your weekly briefing &mdash; May 12, 2026</h3>
@@ -252,7 +252,7 @@ export default async function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-              Rank<span className="text-emerald-500">Seen</span>
+              Spotted<span className="text-emerald-500">HQ</span>
             </p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Local SEO + AI visibility for real businesses.</p>
           </div>
@@ -263,7 +263,7 @@ export default async function LandingPage() {
             <Link href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Terms</Link>
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500">&copy; 2026 RankSeen. All rights reserved.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">&copy; 2026 SpottedHQ. All rights reserved.</p>
         </div>
       </footer>
     </div>

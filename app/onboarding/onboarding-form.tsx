@@ -80,7 +80,7 @@ function StepIndicator({ step }: { step: number }) {
 
 function loadSetupData() {
   try {
-    const saved = localStorage.getItem('rankseen_setup')
+    const saved = localStorage.getItem('spottedhq_setup')
     if (saved) return JSON.parse(saved) as Record<string, unknown>
   } catch {}
   return null
@@ -181,7 +181,7 @@ export default function OnboardingForm() {
         })
 
       if (dbError) throw dbError
-      try { localStorage.removeItem('rankseen_setup') } catch {}
+      try { localStorage.removeItem('spottedhq_setup') } catch {}
       router.push('/dashboard')
       router.refresh()
     } catch (e) {
@@ -271,7 +271,7 @@ export default function OnboardingForm() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
             {loadingKeywords
               ? <>Generating keywords for <strong className="text-slate-700 dark:text-slate-300">{business.name}</strong>…</>
-              : 'RankSeen checks your Google Maps ranking for these every Monday. Select up to 10.'}
+              : 'SpottedHQ checks your Google Maps ranking for these every Monday. Select up to 10.'}
           </p>
 
           <div className="flex flex-wrap gap-2 mb-4">

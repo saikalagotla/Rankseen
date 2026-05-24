@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RankSeen — Local SEO & AI Visibility",
+  title: "SpottedHQ — Local SEO & AI Visibility",
   description: "Track your Google Maps rank, AI visibility, and citation health in one place. The weekly local SEO report built for business owners.",
 };
 

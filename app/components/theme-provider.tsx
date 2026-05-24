@@ -26,7 +26,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light')
 
   useEffect(() => {
-    const stored = localStorage.getItem('rankseen_theme') as Theme | null
+    const stored = localStorage.getItem('spottedhq_theme') as Theme | null
     if (stored === 'light' || stored === 'dark' || stored === 'system') {
       setThemeState(stored)
     }
@@ -55,7 +55,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (t: Theme) => {
     setThemeState(t)
-    localStorage.setItem('rankseen_theme', t)
+    localStorage.setItem('spottedhq_theme', t)
   }
 
   return (

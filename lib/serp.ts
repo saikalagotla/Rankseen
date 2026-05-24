@@ -19,7 +19,7 @@ export async function geocodeCity(cityState: string): Promise<string | null> {
     const q = encodeURIComponent(cityState)
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`,
-      { headers: { 'User-Agent': 'RankSeen/1.0' }, cache: 'no-store' }
+      { headers: { 'User-Agent': 'SpottedHQ/1.0' }, cache: 'no-store' }
     )
     if (!res.ok) return null
     const data = await res.json()

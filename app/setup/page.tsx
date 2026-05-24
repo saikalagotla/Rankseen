@@ -69,7 +69,7 @@ export default function SetupPage() {
   // Load persisted data
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('rankseen_setup')
+      const saved = localStorage.getItem('spottedhq_setup')
       if (saved) {
         const data = JSON.parse(saved)
         if (data.businessName) setBusinessName(data.businessName)
@@ -83,7 +83,7 @@ export default function SetupPage() {
 
   const saveToLocalStorage = (extra: Record<string, unknown> = {}) => {
     try {
-      localStorage.setItem('rankseen_setup', JSON.stringify({
+      localStorage.setItem('spottedhq_setup', JSON.stringify({
         businessName,
         businessType,
         cityState,

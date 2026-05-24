@@ -232,7 +232,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
         <div className="flex items-start justify-between mb-6">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Tracked Keywords</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Keywords RankSeen checks weekly in Google Maps.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Keywords SpottedHQ checks weekly in Google Maps.</p>
           </div>
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${keywords.length >= 10 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
             {keywords.length} / 10 slots
