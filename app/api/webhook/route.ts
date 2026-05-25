@@ -2,6 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
+function planFromPriceId(priceId: string): 'starter' | 'pro' | null {
+  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return 'starter'
+  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro'
+  return null
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
@@ -32,6 +38,40 @@ export async function POST(request: NextRequest) {
           ...(customerId ? { stripe_customer_id: customerId } : {}),
         })
         .eq('id', userId)
+    }
+  }
+
+  if (event.type === 'customer.subscription.updated') {
+    const sub = event.data.object as Stripe.Subscription
+    const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
+    const priceId = sub.items.data[0]?.price?.id
+
+    if (sub.status === 'active' && priceId) {
+      const plan = planFromPriceId(priceId)
+      if (plan) {
+        await supabase
+          .from('profiles')
+          .update({ plan })
+          .eq('stripe_customer_id', customerId)
+      }
+    } else if (sub.status === 'past_due' || sub.status === 'unpaid') {
+      await supabase
+        .from('profiles')
+        .update({ plan: 'free' })
+        .eq('stripe_customer_id', customerId)
+    }
+  }
+
+  if (event.type === 'invoice.payment_failed') {
+    const invoice = event.data.object as Stripe.Invoice
+    const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id
+    // Only downgrade on the first failure — Stripe will also fire subscription.updated
+    // with status=past_due, but handling it here ensures immediate lockout.
+    if (customerId && invoice.attempt_count === 1) {
+      await supabase
+        .from('profiles')
+        .update({ plan: 'free' })
+        .eq('stripe_customer_id', customerId)
     }
   }
 

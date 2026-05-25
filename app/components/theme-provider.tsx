@@ -22,15 +22,18 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light')
-
-  useEffect(() => {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system'
     const stored = localStorage.getItem('spottedhq_theme') as Theme | null
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
-      setThemeState(stored)
-    }
-  }, [])
+    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored
+    return 'system'
+  })
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
+    if (typeof window === 'undefined') return 'light'
+    const stored = localStorage.getItem('spottedhq_theme') as Theme | null
+    const isDark = stored === 'dark' || ((!stored || stored === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    return isDark ? 'dark' : 'light'
+  })
 
   useEffect(() => {
     const apply = (t: Theme) => {

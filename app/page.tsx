@@ -259,8 +259,8 @@ export default async function LandingPage() {
             <Link href="#features" className="hover:text-slate-900 dark:hover:text-white transition-colors">Features</Link>
             <Link href="#pricing" className="hover:text-slate-900 dark:hover:text-white transition-colors">Pricing</Link>
             <Link href="/dashboard" className="hover:text-slate-900 dark:hover:text-white transition-colors">Demo</Link>
-            <Link href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white transition-colors">Terms</Link>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500">&copy; 2026 SpottedHQ. All rights reserved.</p>
         </div>
