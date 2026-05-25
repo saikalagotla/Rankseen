@@ -15,7 +15,9 @@ type EngineRunner = (query: string, biz: string) => Promise<AICheckResult>
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user || user.email !== process.env.OWNER_EMAIL) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const { businessName, businessType, cityState, keywords: rawKeywords } = await req.json()
   if (!businessName || !cityState) {
