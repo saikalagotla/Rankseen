@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { getRankSnapshots, getLatestAIVisibility, getLatestCitations, getReviews } from '@/lib/scans'
@@ -65,19 +66,23 @@ export default async function DashboardPage() {
       getReviews(user!.id, 3),
     ])
 
-    if (!profile?.business_name) redirect('/onboarding')
+    const cookieStore = await cookies()
+    const hasSkipped = cookieStore.get('onboarding_skipped')?.value === '1'
+    if (!profile?.business_name && !hasSkipped) redirect('/onboarding')
 
     snapshots = snapshotData as typeof DEMO_SNAPSHOTS
     aiResults = aiData as typeof DEMO_AI_RESULTS
     citations = citationData as typeof DEMO_CITATIONS
     reviews = reviewData as typeof DEMO_REVIEWS
-    bizName = profile.business_name
+    bizName = profile.business_name ?? ''
     bizType = profile.business_type ?? 'Business'
     cityState = profile.city_state ?? ''
     userPlan = profile.plan ?? 'free'
     userPlanRank = { free: 0, solo: 0, starter: 1, pro: 2 }[userPlan] ?? 0
     previewToken = profile.preview_token ?? null
   }
+
+  const needsSetup = !isDemo && !bizName
 
   // --- Maps rank summary ---
   const byKeyword = new Map<string, { rank: number | null; scan_week: string }[]>()
@@ -249,7 +254,7 @@ export default async function DashboardPage() {
         {!isDemo && (
           <div className="flex items-center gap-2">
             {previewToken && <ShareLinkButton token={previewToken} />}
-            <ScanTrigger endpoint="/api/scan/maps" label="Scan Maps" disabled={!process.env.SERP_API_KEY} variant="button" />
+            <ScanTrigger endpoint="/api/scan/maps" label="Scan Maps" disabled={!process.env.SERP_API_KEY} variant="button" needsSetup={needsSetup} />
           </div>
         )}
       </div>

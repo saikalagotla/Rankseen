@@ -4,6 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+async function skipOnboarding(router: ReturnType<typeof useRouter>) {
+  await fetch('/api/skip-onboarding', { method: 'POST' })
+  router.push('/dashboard')
+}
+
 const businessTypes = [
   'Barbershop',
   'Hair Salon',
@@ -262,6 +267,14 @@ export default function OnboardingForm() {
           >
             Next: Choose keywords →
           </button>
+          <p className="text-center mt-4">
+            <button
+              onClick={() => skipOnboarding(router)}
+              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
+              Skip for now → go to dashboard
+            </button>
+          </p>
         </>
       )}
 
@@ -360,6 +373,14 @@ export default function OnboardingForm() {
               {saving ? 'Setting up your dashboard…' : loadingKeywords ? 'Generating keywords…' : 'Finish setup →'}
             </button>
           </div>
+          <p className="text-center mt-4">
+            <button
+              onClick={() => skipOnboarding(router)}
+              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
+              Skip for now → go to dashboard
+            </button>
+          </p>
         </>
       )}
     </div>

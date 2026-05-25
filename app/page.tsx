@@ -84,7 +84,10 @@ export default async function LandingPage({
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) redirect('/dashboard')
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('business_name').eq('id', user.id).single()
+    if (profile?.business_name) redirect('/dashboard')
+  }
   const currentPlanKey = null
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
