@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { trackEvent } from '@/lib/mixpanel'
 
 type BusinessType = 'Restaurant' | 'Barbershop/Salon' | 'Dental/Medical' | 'Auto Repair' | 'Gym/Fitness' | 'Retail Store' | 'Other'
 
@@ -134,6 +135,7 @@ export default function SetupPage() {
 
   const handlePlanSelect = (planName: string) => {
     saveToLocalStorage({ selectedPlan: planName, completedAt: new Date().toISOString() })
+    trackEvent('Setup Completed', { plan: planName })
     router.push('/dashboard')
   }
 

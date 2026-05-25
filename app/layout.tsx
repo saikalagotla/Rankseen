@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./components/auth-provider";
+import MixpanelProvider from "./components/mixpanel-provider";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -18,6 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SpottedHQ — Local SEO & AI Visibility",
   description: "Track your Google Maps rank, AI visibility, and citation health in one place. The weekly local SEO report built for business owners.",
+  icons: { icon: "/tabLogo.svg", shortcut: "/tabLogo.svg" },
 };
 
 export default async function RootLayout({
@@ -36,7 +38,10 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider initialUser={user}>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <MixpanelProvider />
+            {children}
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

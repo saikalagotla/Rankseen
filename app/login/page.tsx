@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from '../components/theme-toggle'
+import { trackEvent } from '@/lib/mixpanel'
 
 type Mode = 'signin' | 'signup'
 
@@ -23,6 +24,7 @@ export default function LoginPage() {
   async function handleGoogleSignIn() {
     setLoading(true)
     setError(null)
+    trackEvent('Signed In', { method: 'google' })
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -45,6 +47,7 @@ export default function LoginPage() {
         setError(error.message)
         setLoading(false)
       } else {
+        trackEvent('Signed In', { method: 'email' })
         router.push(callbackUrl)
       }
     } else {
@@ -57,6 +60,7 @@ export default function LoginPage() {
         setError(error.message)
         setLoading(false)
       } else {
+        trackEvent('Signed Up', { method: 'email' })
         setSuccessMsg('Check your email for a confirmation link.')
         setLoading(false)
       }

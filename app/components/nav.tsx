@@ -25,10 +25,9 @@ export default function Nav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-slate-100 dark:border-slate-800 transition-colors duration-300">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Spotted<span className="text-emerald-500">HQ</span>
-          </span>
+        <Link href="/" className="flex items-center">
+          <img src="/logoLight.svg" alt="SpottedHQ" className="block dark:hidden h-10 w-auto" />
+          <img src="/logoDark.svg" alt="SpottedHQ" className="hidden dark:block h-10 w-auto" />
         </Link>
 
         {/* Desktop nav */}

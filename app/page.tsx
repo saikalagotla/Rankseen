@@ -249,9 +249,10 @@ export default async function LandingPage() {
       <footer className="bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 py-12 px-6 transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-              Spotted<span className="text-emerald-500">HQ</span>
-            </p>
+            <div className="mb-1">
+              <img src="/logoLight.svg" alt="SpottedHQ" className="block dark:hidden h-7 w-auto" />
+              <img src="/logoDark.svg" alt="SpottedHQ" className="hidden dark:block h-7 w-auto" />
+            </div>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Local SEO + AI visibility for real businesses.</p>
           </div>
           <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">

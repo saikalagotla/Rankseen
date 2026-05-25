@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser, getUserMeta } from '../../components/auth-provider'
 import ThemeToggle from '../../components/theme-toggle'
+import { trackEvent, resetUser } from '@/lib/mixpanel'
 
 const navItems = [
   {
@@ -116,6 +117,7 @@ export default function Sidebar({ plan, isDemo = false }: { plan: string; isDemo
       })
       const { url, error } = await res.json()
       if (error) throw new Error(error)
+      trackEvent('Upgrade Clicked', { plan: upgradePlan, source: 'sidebar' })
       window.location.href = url
     } catch (e) {
       setUpgradeError(e instanceof Error ? e.message : 'Something went wrong.')
@@ -124,6 +126,8 @@ export default function Sidebar({ plan, isDemo = false }: { plan: string; isDemo
   }
 
   async function handleSignOut() {
+    trackEvent('Signed Out')
+    resetUser()
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/')
