@@ -74,12 +74,12 @@ export default async function DashboardPage() {
     aiResults = aiData as typeof DEMO_AI_RESULTS
     citations = citationData as typeof DEMO_CITATIONS
     reviews = reviewData as typeof DEMO_REVIEWS
-    bizName = profile.business_name ?? ''
-    bizType = profile.business_type ?? 'Business'
-    cityState = profile.city_state ?? ''
-    userPlan = profile.plan ?? 'free'
+    bizName = profile?.business_name ?? ''
+    bizType = profile?.business_type ?? 'Business'
+    cityState = profile?.city_state ?? ''
+    userPlan = profile?.plan ?? 'free'
     userPlanRank = { free: 0, solo: 0, starter: 1, pro: 2 }[userPlan] ?? 0
-    previewToken = profile.preview_token ?? null
+    previewToken = profile?.preview_token ?? null
   }
 
   const needsSetup = !isDemo && !bizName
