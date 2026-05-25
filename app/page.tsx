@@ -3,7 +3,6 @@ import Nav from './components/nav'
 import PricingCard from './components/pricing-card'
 import AnimateOnScroll from './components/animate-on-scroll'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 const features = [
   {
@@ -84,10 +83,6 @@ export default async function LandingPage({
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
-    const { data: profile } = await supabase.from('profiles').select('business_name').eq('id', user.id).single()
-    if (profile?.business_name) redirect('/dashboard')
-  }
   const currentPlanKey = null
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
