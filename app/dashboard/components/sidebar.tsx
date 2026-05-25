@@ -93,7 +93,7 @@ function UserAvatar({ name, avatar, size = 32 }: { name: string; avatar: string 
   )
 }
 
-export default function Sidebar({ plan }: { plan: string }) {
+export default function Sidebar({ plan, isDemo = false }: { plan: string; isDemo?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const user = useUser()
@@ -145,11 +145,14 @@ export default function Sidebar({ plan }: { plan: string }) {
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <ul className="flex flex-col gap-1">
           {navItems.map((item) => {
+            const isSettings = item.href === '/dashboard/settings'
+            const isLocked = isDemo && isSettings
+            const href = isLocked ? '/login' : item.href
             const isActive = pathname === item.href
             return (
               <li key={item.href}>
                 <Link
-                  href={item.href}
+                  href={href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
                       ? 'bg-slate-800 dark:bg-slate-700 text-white'
@@ -158,6 +161,11 @@ export default function Sidebar({ plan }: { plan: string }) {
                 >
                   {item.icon}
                   {item.label}
+                  {isLocked && (
+                    <svg className="w-3 h-3 ml-auto shrink-0 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </Link>
               </li>
             )
@@ -165,8 +173,25 @@ export default function Sidebar({ plan }: { plan: string }) {
         </ul>
       </nav>
 
-      {/* Upgrade badge — only for non-Pro users */}
-      {!isPro && (
+      {/* Bottom CTA — login box for demo, upgrade badge for signed-in non-Pro */}
+      {isDemo ? (
+        <div className="px-4 pb-3 shrink-0">
+          <div className="bg-slate-800 rounded-xl p-4">
+            <p className="text-white text-xs font-semibold mb-1">Track your business</p>
+            <p className="text-slate-400 text-xs mb-3">Set up takes 2 minutes. No credit card required.</p>
+            <Link
+              href="/setup"
+              className="block w-full text-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+            >
+              Start free →
+            </Link>
+            <p className="text-slate-500 text-xs mt-2 text-center">
+              Already signed up?{' '}
+              <Link href="/login" className="text-emerald-400 hover:text-emerald-300 transition-colors">Sign in</Link>
+            </p>
+          </div>
+        </div>
+      ) : !isPro && (
         <div className="px-4 pb-3 shrink-0">
           <div className="bg-gradient-to-r from-emerald-900 to-emerald-800 rounded-xl p-4">
             <p className="text-white text-xs font-semibold mb-1 capitalize">{isFree ? 'Free' : 'Starter'} Plan</p>

@@ -1,9 +1,10 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { getLatestAIVisibility, getLatestAICompetitors } from '@/lib/scans'
+import { DEMO_BIZ, DEMO_AI_RESULTS, DEMO_AI_COMPETITORS } from '@/lib/demo-data'
 import ScanTrigger from '../components/scan-trigger'
 import UpgradeButton from '../components/upgrade-button'
+import DemoBanner from '../components/demo-banner'
 
 const ENGINE_META: Record<string, { label: string; icon: string; minPlan: 'free' | 'starter' | 'pro' }> = {
   perplexity: { label: 'Perplexity', icon: '🔍', minPlan: 'free' },
@@ -103,19 +104,39 @@ function buildGeoTips(params: {
 export default async function AIVisibilityPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const isDemo = !user
 
-  const [profile, results, aiCompetitors] = await Promise.all([
-    getProfile(),
-    getLatestAIVisibility(user.id),
-    getLatestAICompetitors(user.id),
-  ])
+  let results: typeof DEMO_AI_RESULTS
+  let aiCompetitors: typeof DEMO_AI_COMPETITORS
+  let bizName: string
+  let city: string
+  let bizType: string
+  let userPlan: string
+  let userPlanRank: number
 
-  const bizName = profile?.business_name ?? 'Your Business'
-  const city = profile?.city_state?.split(',')[0]?.trim() ?? 'your city'
-  const bizType = profile?.business_type?.toLowerCase() ?? 'business'
-  const userPlan = profile?.plan ?? 'free'
-  const userPlanRank = PLAN_RANK[userPlan] ?? 0
+  if (isDemo) {
+    results = DEMO_AI_RESULTS
+    aiCompetitors = DEMO_AI_COMPETITORS
+    bizName = DEMO_BIZ.business_name
+    city = DEMO_BIZ.city_state.split(',')[0].trim()
+    bizType = DEMO_BIZ.business_type.toLowerCase()
+    userPlan = DEMO_BIZ.plan
+    userPlanRank = 2
+  } else {
+    const [profile, resultData, competitorData] = await Promise.all([
+      getProfile(),
+      getLatestAIVisibility(user!.id),
+      getLatestAICompetitors(user!.id),
+    ])
+    results = resultData as typeof DEMO_AI_RESULTS
+    aiCompetitors = competitorData as typeof DEMO_AI_COMPETITORS
+    bizName = profile?.business_name ?? 'Your Business'
+    city = profile?.city_state?.split(',')[0]?.trim() ?? 'your city'
+    bizType = profile?.business_type?.toLowerCase() ?? 'business'
+    userPlan = profile?.plan ?? 'free'
+    userPlanRank = PLAN_RANK[userPlan] ?? 0
+  }
+
   const hasData = results.length > 0
   const scanWeek = results[0]?.scan_week
 
@@ -160,6 +181,8 @@ export default async function AIVisibilityPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
+      {isDemo && <DemoBanner />}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -169,19 +192,21 @@ export default async function AIVisibilityPage() {
             {scanWeek && <span className="ml-1">· Week of {scanWeek}</span>}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {userPlan !== 'pro' && (
-            <UpgradeButton
-              label={userPlanRank === 0 ? 'Upgrade to Starter' : 'Upgrade to Pro'}
-              variant="button"
-              plan={userPlanRank === 0 ? 'starter' : 'pro'}
-            />
-          )}
-          <ScanTrigger endpoint="/api/scan/ai" label="Scan now" disabled={!hasAnyKey} />
-        </div>
+        {!isDemo && (
+          <div className="flex items-center gap-3">
+            {userPlan !== 'pro' && (
+              <UpgradeButton
+                label={userPlanRank === 0 ? 'Upgrade to Starter' : 'Upgrade to Pro'}
+                variant="button"
+                plan={userPlanRank === 0 ? 'starter' : 'pro'}
+              />
+            )}
+            <ScanTrigger endpoint="/api/scan/ai" label="Scan now" disabled={!hasAnyKey} />
+          </div>
+        )}
       </div>
 
-      {!hasAnyKey && (
+      {!isDemo && !hasAnyKey && (
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mb-6 flex items-start gap-3">
           <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />

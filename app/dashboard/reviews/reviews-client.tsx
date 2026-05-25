@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { StoredReview } from '@/lib/scans'
 import ScanTrigger from '../components/scan-trigger'
 
@@ -52,6 +53,7 @@ type Props = {
   googleSyncDisabled?: boolean
   yelpSyncLabel?: string
   yelpSyncDisabled?: boolean
+  isDemo?: boolean
 }
 
 export default function ReviewsClient({
@@ -62,6 +64,7 @@ export default function ReviewsClient({
   googleSyncDisabled = false,
   yelpSyncLabel = 'Sync Yelp',
   yelpSyncDisabled = false,
+  isDemo = false,
 }: Props) {
   function reviewUrl(r: StoredReview) {
     if (r.url) return r.url
@@ -135,10 +138,12 @@ export default function ReviewsClient({
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reviews</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor and respond to customer reviews</p>
           </div>
-          <div className="flex items-center gap-2">
-            <ScanTrigger endpoint="/api/scan/reviews?source=google" label={googleSyncLabel} disabled={googleSyncDisabled} />
-            <ScanTrigger endpoint="/api/scan/reviews?source=yelp" label={yelpSyncLabel} disabled={yelpSyncDisabled} />
-          </div>
+          {!isDemo && (
+            <div className="flex items-center gap-2">
+              <ScanTrigger endpoint="/api/scan/reviews?source=google" label={googleSyncLabel} disabled={googleSyncDisabled} />
+              <ScanTrigger endpoint="/api/scan/reviews?source=yelp" label={yelpSyncLabel} disabled={yelpSyncDisabled} />
+            </div>
+          )}
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 flex flex-col items-center text-center gap-3">
           <svg className="w-12 h-12 text-slate-200 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,16 +160,31 @@ export default function ReviewsClient({
 
   return (
     <div className="p-8 max-w-6xl mx-auto w-full">
+      {isDemo && (
+        <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">You&rsquo;re viewing a demo dashboard</p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">Sign up free to track your own business — no credit card required.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/login" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">Sign in</Link>
+            <Link href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors">Start free →</Link>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Reviews</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor and respond to customer reviews · {totalReviews} total</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ScanTrigger endpoint="/api/scan/reviews?source=google" label={googleSyncLabel} disabled={googleSyncDisabled} />
-          <ScanTrigger endpoint="/api/scan/reviews?source=yelp" label={yelpSyncLabel} disabled={yelpSyncDisabled} />
-        </div>
+        {!isDemo && (
+          <div className="flex items-center gap-2">
+            <ScanTrigger endpoint="/api/scan/reviews?source=google" label={googleSyncLabel} disabled={googleSyncDisabled} />
+            <ScanTrigger endpoint="/api/scan/reviews?source=yelp" label={yelpSyncLabel} disabled={yelpSyncDisabled} />
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -249,7 +269,7 @@ export default function ReviewsClient({
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${SOURCE_COLORS[source] ?? 'bg-slate-100 text-slate-600'}`}>{source}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{r.body}</p>
-                  {drafting === r.id ? (
+                  {!isDemo && (drafting === r.id ? (
                     <div className="mt-3">
                       <textarea
                         className="w-full text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
@@ -290,7 +310,7 @@ export default function ReviewsClient({
                         </a>
                       )}
                     </div>
-                  )}
+                  ))}
                 </div>
               )
             })}
@@ -350,7 +370,7 @@ export default function ReviewsClient({
                       </div>
                     )}
 
-                    {!r.replied && (
+                    {!r.replied && !isDemo && (
                       drafting === r.id ? (
                         <div>
                           <textarea

@@ -1,8 +1,9 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { getLatestCitations } from '@/lib/scans'
+import { DEMO_BIZ, DEMO_CITATIONS } from '@/lib/demo-data'
 import ScanTrigger from '../components/scan-trigger'
+import DemoBanner from '../components/demo-banner'
 
 const PLATFORM_URLS: Record<string, string> = {
   'Google Business Profile': 'https://business.google.com',
@@ -39,16 +40,26 @@ function StatusIcon({ status }: { status: string }) {
 export default async function CitationsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const isDemo = !user
 
-  const [profile, citations] = await Promise.all([
-    getProfile(),
-    getLatestCitations(user.id),
-  ])
+  let citations: typeof DEMO_CITATIONS
+  let bizName: string
+  let city: string
+  let phone: string | null
 
-  const bizName = profile?.business_name ?? 'Your Business'
-  const city = profile?.city_state ?? 'Your City'
-  const phone = profile?.phone ?? null
+  if (isDemo) {
+    citations = DEMO_CITATIONS
+    bizName = DEMO_BIZ.business_name
+    city = DEMO_BIZ.city_state
+    phone = DEMO_BIZ.phone
+  } else {
+    const [profile, citationData] = await Promise.all([getProfile(), getLatestCitations(user!.id)])
+    citations = citationData as typeof DEMO_CITATIONS
+    bizName = profile?.business_name ?? 'Your Business'
+    city = profile?.city_state ?? 'Your City'
+    phone = profile?.phone ?? null
+  }
+
   const hasApiKey = !!process.env.SERP_API_KEY
   const scanDate = citations[0]?.scan_date
   const MANUAL_PLATFORM_NAMES = new Set(MANUAL_PLATFORMS.map(p => p.name))
@@ -64,6 +75,8 @@ export default async function CitationsPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
+      {isDemo && <DemoBanner />}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -73,10 +86,10 @@ export default async function CitationsPage() {
             {scanDate && ` · Last scanned ${scanDate}`}
           </p>
         </div>
-        <ScanTrigger endpoint="/api/scan/citations" label="Scan now" disabled={!hasApiKey} />
+        {!isDemo && <ScanTrigger endpoint="/api/scan/citations" label="Scan now" disabled={!hasApiKey} />}
       </div>
 
-      {!hasApiKey && (
+      {!isDemo && !hasApiKey && (
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mb-6 flex items-start gap-3">
           <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -201,6 +214,8 @@ export default async function CitationsPage() {
                 <p className="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-0.5">Phone</p>
                 {phone ? (
                   <p className="text-sm font-semibold text-white">{phone}</p>
+                ) : isDemo ? (
+                  <p className="text-xs text-blue-200">Sign in to add your phone</p>
                 ) : (
                   <a href="/dashboard/settings" className="text-xs text-blue-200 hover:text-white underline transition-colors">Add phone in Settings →</a>
                 )}

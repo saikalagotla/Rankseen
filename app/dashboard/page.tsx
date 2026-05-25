@@ -8,6 +8,8 @@ import UpgradeButton from './components/upgrade-button'
 import GrowthAdvisor from './components/growth-advisor'
 import ShareLinkButton from './components/share-link-button'
 import Link from 'next/link'
+import { DEMO_BIZ, DEMO_SNAPSHOTS, DEMO_AI_RESULTS, DEMO_CITATIONS, DEMO_REVIEWS } from '@/lib/demo-data'
+import DemoBanner from './components/demo-banner'
 
 function ChangeChip({ dir, change }: { dir: string; change: number }) {
   if (dir === 'flat') {
@@ -27,37 +29,6 @@ type DigestItem = {
   link?: { label: string; href: string; checkout?: boolean }
 }
 
-const DEMO_SNAPSHOTS = [
-  { keyword: 'barbershop near me Austin', rank: 3, scan_week: '2026-05-19' },
-  { keyword: 'barbershop near me Austin', rank: 5, scan_week: '2026-05-12' },
-  { keyword: 'best barbershop Austin TX', rank: 7, scan_week: '2026-05-19' },
-  { keyword: 'best barbershop Austin TX', rank: 7, scan_week: '2026-05-12' },
-  { keyword: 'mens haircut Austin', rank: 12, scan_week: '2026-05-19' },
-  { keyword: 'mens haircut Austin', rank: 14, scan_week: '2026-05-12' },
-]
-
-const DEMO_AI_RESULTS = [
-  { engine: 'perplexity', mentioned: true },
-  { engine: 'google_ai', mentioned: true },
-  { engine: 'claude', mentioned: false },
-  { engine: 'chatgpt', mentioned: true },
-  { engine: 'bing', mentioned: false },
-]
-
-const DEMO_CITATIONS = [
-  { platform: 'Google', status: 'ok', issue: null },
-  { platform: 'Yelp', status: 'warn', issue: 'Phone number format differs — update to match Google.' },
-  { platform: 'Facebook', status: 'ok', issue: null },
-  { platform: 'Foursquare', status: 'warn', issue: 'Address abbreviation mismatch.' },
-  { platform: 'TripAdvisor', status: 'ok', issue: null },
-  { platform: 'YellowPages', status: 'not_listed', issue: null },
-]
-
-const DEMO_REVIEWS = [
-  { id: '1', author: 'Marcus T.', rating: 5, body: 'Best haircut I\'ve had in years. Attention to detail is unreal.', source: 'google', replied: true },
-  { id: '2', author: 'Sarah K.', rating: 4, body: 'Great atmosphere and skilled barbers — will definitely come back.', source: 'yelp', replied: false },
-  { id: '3', author: 'James R.', rating: 5, body: 'Always consistent, always on time. My go-to spot.', source: 'google', replied: true },
-]
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -76,14 +47,14 @@ export default async function DashboardPage() {
   let previewToken: string | null = null
 
   if (isDemo) {
-    snapshots = DEMO_SNAPSHOTS
-    aiResults = DEMO_AI_RESULTS
-    citations = DEMO_CITATIONS
-    reviews = DEMO_REVIEWS
-    bizName = 'The Craft Barbershop'
-    bizType = 'Barbershop'
-    cityState = 'Austin, TX'
-    userPlan = 'pro'
+    snapshots = DEMO_SNAPSHOTS as typeof DEMO_SNAPSHOTS
+    aiResults = DEMO_AI_RESULTS as typeof DEMO_AI_RESULTS
+    citations = DEMO_CITATIONS as typeof DEMO_CITATIONS
+    reviews = DEMO_REVIEWS as typeof DEMO_REVIEWS
+    bizName = DEMO_BIZ.business_name
+    bizType = DEMO_BIZ.business_type
+    cityState = DEMO_BIZ.city_state
+    userPlan = DEMO_BIZ.plan
     userPlanRank = 2
   } else {
     const [profile, snapshotData, aiData, citationData, reviewData] = await Promise.all([
@@ -264,21 +235,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
-      {/* Demo banner */}
-      {isDemo && (
-        <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">You&rsquo;re viewing a demo dashboard</p>
-            <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">Sign up free to track your own business — no credit card required.</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link href="/login" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">Sign in</Link>
-            <Link href="/setup" className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors">
-              Start free →
-            </Link>
-          </div>
-        </div>
-      )}
+      {isDemo && <DemoBanner />}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
