@@ -4,6 +4,7 @@ import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./components/auth-provider";
 import MixpanelProvider from "./components/mixpanel-provider";
 import { createClient } from "@/lib/supabase/server";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,6 +48,7 @@ export default async function RootLayout({
             {children}
           </ThemeProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
