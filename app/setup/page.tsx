@@ -58,6 +58,7 @@ export default function SetupPage() {
   const [keywords, setKeywords] = useState<string[]>([])
   const [keywordInput, setKeywordInput] = useState('')
   const [loadingKeywords, setLoadingKeywords] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 
   // Populate static suggestions when business type changes (fallback only)
   useEffect(() => {
@@ -134,6 +135,8 @@ export default function SetupPage() {
   }
 
   const handlePlanSelect = (planName: string) => {
+    if (selectedPlan) return
+    setSelectedPlan(planName)
     saveToLocalStorage({ selectedPlan: planName, completedAt: new Date().toISOString() })
     trackEvent('Setup Completed', { plan: planName })
     router.push('/dashboard')
@@ -240,7 +243,7 @@ export default function SetupPage() {
               <button
                 onClick={handleStep1Next}
                 disabled={!businessName.trim() || !cityState.trim()}
-                className="mt-8 w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-colors"
+                className="mt-8 w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all"
               >
                 Continue &rarr;
               </button>
@@ -317,14 +320,14 @@ export default function SetupPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(0)}
-                  className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 py-3 rounded-xl font-semibold text-sm transition-colors"
+                  className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] py-3 rounded-xl font-semibold text-sm transition-all"
                 >
                   &larr; Back
                 </button>
                 <button
                   onClick={handleStep2Next}
                   disabled={loadingKeywords || keywords.length === 0}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-colors"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all"
                 >
                   {loadingKeywords ? 'Generating keywords…' : 'Continue →'}
                 </button>
@@ -341,55 +344,70 @@ export default function SetupPage() {
               </div>
 
               <div className="flex flex-col gap-4">
-                {plans.map((plan) => (
-                  <div
-                    key={plan.name}
-                    className={`relative rounded-2xl p-6 border cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
-                      plan.highlighted
-                        ? 'bg-slate-900 dark:bg-slate-800 border-emerald-500 ring-2 ring-emerald-500'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                    onClick={() => handlePlanSelect(plan.name)}
-                  >
-                    {plan.badge && (
-                      <span className="absolute -top-3 left-6 bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        {plan.badge}
-                      </span>
-                    )}
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className={`text-sm font-semibold uppercase tracking-wider mb-1 ${plan.highlighted ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-500'}`}>{plan.name}</p>
-                        <p className={`text-sm ${plan.highlighted ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>{plan.description}</p>
+                {plans.map((plan) => {
+                  const isSelected = selectedPlan === plan.name
+                  const isDisabled = !!selectedPlan && !isSelected
+                  return (
+                    <div
+                      key={plan.name}
+                      className={`relative rounded-2xl p-6 border cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] ${
+                        isSelected ? 'scale-[0.99] opacity-80' : ''
+                      } ${isDisabled ? 'opacity-50 pointer-events-none' : ''} ${
+                        plan.highlighted
+                          ? 'bg-slate-900 dark:bg-slate-800 border-emerald-500 ring-2 ring-emerald-500'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      }`}
+                      onClick={() => handlePlanSelect(plan.name)}
+                    >
+                      {plan.badge && (
+                        <span className="absolute -top-3 left-6 bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                          {plan.badge}
+                        </span>
+                      )}
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className={`text-sm font-semibold uppercase tracking-wider mb-1 ${plan.highlighted ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-500'}`}>{plan.name}</p>
+                          <p className={`text-sm ${plan.highlighted ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>{plan.description}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className={`text-3xl font-bold ${plan.highlighted ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{plan.price}</span>
+                          <span className={`text-sm ${plan.highlighted ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>/mo</span>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <span className={`text-3xl font-bold ${plan.highlighted ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{plan.price}</span>
-                        <span className={`text-sm ${plan.highlighted ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>/mo</span>
+                      <ul className="flex flex-wrap gap-x-4 gap-y-1 mt-4">
+                        {plan.features.map((f) => (
+                          <li key={f} className={`text-xs flex items-center gap-1 ${plan.highlighted ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                            <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className={`mt-5 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                        plan.highlighted
+                          ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                          : 'bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900'
+                      }`}>
+                        {isSelected ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Setting up…
+                          </>
+                        ) : 'Start Free Trial'}
                       </div>
                     </div>
-                    <ul className="flex flex-wrap gap-x-4 gap-y-1 mt-4">
-                      {plan.features.map((f) => (
-                        <li key={f} className={`text-xs flex items-center gap-1 ${plan.highlighted ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>
-                          <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className={`mt-5 text-center py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                      plan.highlighted
-                        ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                        : 'bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900'
-                    }`}>
-                      Start Free Trial
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               <button
-                onClick={() => setStep(1)}
-                className="mt-6 w-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                onClick={() => { setStep(1); setSelectedPlan(null) }}
+                disabled={!!selectedPlan}
+                className="mt-6 w-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed py-2.5 rounded-xl text-sm font-medium transition-all"
               >
                 &larr; Back
               </button>

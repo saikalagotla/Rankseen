@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Nav from './components/nav'
 import PricingCard from './components/pricing-card'
 import AnimateOnScroll from './components/animate-on-scroll'
+import LandingCtaButtons from './components/landing-cta-buttons'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -90,8 +91,12 @@ export default async function LandingPage({
       <Nav />
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+        {/* Decorative background orb */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-emerald-400/8 dark:bg-emerald-500/5 rounded-full blur-3xl animate-float" />
+        </div>
+        <div className="relative max-w-4xl mx-auto text-center">
           <span className="animate-fade-in-up inline-block bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-emerald-200 dark:ring-emerald-800 mb-6">
             Local SEO + AI Visibility &mdash; in one weekly report
           </span>
@@ -102,19 +107,8 @@ export default async function LandingPage({
           <p className="animate-fade-in-up delay-200 text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             The weekly local SEO report built for business owners, not agencies. Track your Maps rank, AI visibility, and citation health in one place.
           </p>
-          <div className="animate-fade-in-up delay-300 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/setup"
-              className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white px-8 py-4 rounded-xl font-semibold text-base transition-all hover:shadow-lg hover:shadow-emerald-500/25 inline-block"
-            >
-              Start Free Trial
-            </Link>
-            <Link
-              href="/dashboard"
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-800 dark:text-slate-200 px-8 py-4 rounded-xl font-semibold text-base transition-all hover:shadow-md inline-block"
-            >
-              See Demo &rarr;
-            </Link>
+          <div className="animate-fade-in-up delay-300">
+            <LandingCtaButtons />
           </div>
           <p className="animate-fade-in-up delay-400 text-sm text-slate-400 dark:text-slate-500 mt-4">No credit card required &middot; Cancel anytime</p>
         </div>
