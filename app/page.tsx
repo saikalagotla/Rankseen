@@ -70,7 +70,18 @@ const stats = [
   { value: '0', label: 'agency jargon' },
 ]
 
-export default async function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string; next?: string }>
+}) {
+  const params = await searchParams
+  // Supabase sometimes sends the OAuth code to / instead of /auth/callback — forward it
+  if (params.code) {
+    const next = params.next ?? '/dashboard'
+    redirect(`/auth/callback?code=${params.code}&next=${next}`)
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (user) redirect('/dashboard')
