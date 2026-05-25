@@ -138,32 +138,36 @@ export default function Sidebar({ plan, isDemo = false }: { plan: string; isDemo
     <aside className="fixed left-0 top-0 bottom-0 w-60 bg-slate-900 dark:bg-slate-950 flex flex-col z-40">
       {/* Logo + Theme toggle */}
       <div className="px-6 h-16 flex items-center justify-between border-b border-slate-800 dark:border-slate-800/80 shrink-0">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          <span className="text-white">Rank</span>
-          <span className="text-emerald-400">Seen</span>
+        <Link href="/" className="flex items-center">
+          <img src="/logoDark.svg" alt="SpottedHQ" className="h-8 w-auto" />
         </Link>
         <ThemeToggle className="text-slate-400 hover:text-white hover:bg-slate-800" />
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-0.5">
           {navItems.map((item) => {
             const isSettings = item.href === '/dashboard/settings'
             const isLocked = isDemo && isSettings
             const href = isLocked ? '/login' : item.href
             const isActive = pathname === item.href
             return (
-              <li key={item.href}>
+              <li key={item.href} className="relative">
+                {isActive && (
+                  <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-emerald-400 rounded-r-full" aria-hidden="true" />
+                )}
                 <Link
                   href={href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? 'bg-slate-800 dark:bg-slate-700 text-white'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50 dark:hover:bg-slate-800'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50 dark:hover:bg-slate-800 hover:translate-x-0.5'
                   }`}
                 >
-                  {item.icon}
+                  <span className={`shrink-0 transition-colors duration-150 ${isActive ? 'text-emerald-400' : ''}`}>
+                    {item.icon}
+                  </span>
                   {item.label}
                   {isLocked && (
                     <svg className="w-3 h-3 ml-auto shrink-0 text-slate-600" fill="currentColor" viewBox="0 0 20 20">

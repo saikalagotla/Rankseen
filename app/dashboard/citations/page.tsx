@@ -78,7 +78,7 @@ export default async function CitationsPage() {
       {isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="animate-fade-in flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Citation Health</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -109,12 +109,13 @@ export default async function CitationsPage() {
             color: healthPct !== null
               ? (healthPct >= 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400')
               : 'text-slate-400 dark:text-slate-500',
+            delay: '',
           },
-          { label: 'Consistent', value: hasData ? String(okCount) : '—', color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'Issues', value: hasData ? String(warnCount) : '—', color: 'text-amber-600 dark:text-amber-400' },
-          { label: 'Not listed', value: hasData ? String(missingCount) : '—', color: 'text-slate-500 dark:text-slate-400' },
+          { label: 'Consistent', value: hasData ? String(okCount) : '—', color: 'text-emerald-600 dark:text-emerald-400', delay: 'delay-75' },
+          { label: 'Issues', value: hasData ? String(warnCount) : '—', color: 'text-amber-600 dark:text-amber-400', delay: 'delay-150' },
+          { label: 'Not listed', value: hasData ? String(missingCount) : '—', color: 'text-slate-500 dark:text-slate-400', delay: 'delay-200' },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+          <div key={s.label} className={`animate-fade-in-up ${s.delay} bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5`}>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{s.label}</p>
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
           </div>
@@ -124,7 +125,7 @@ export default async function CitationsPage() {
       {/* Row 2: Citations list (2/3) + sidebar (1/3) */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Citations list */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="animate-fade-in-up delay-200 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Auto-verified Citations</h2>
             <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -187,7 +188,7 @@ export default async function CitationsPage() {
         </div>
 
         {/* Right sidebar: Canonical NAP + Manual platforms */}
-        <div className="flex flex-col gap-5">
+        <div className="animate-fade-in-up delay-300 flex flex-col gap-5">
           {/* Canonical NAP */}
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 rounded-2xl p-5 text-white shadow-lg shadow-blue-200 dark:shadow-blue-950/50">
             <div className="flex items-center gap-2 mb-4">

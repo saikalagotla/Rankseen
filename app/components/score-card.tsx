@@ -18,10 +18,10 @@ export default function ScoreCard({ title, value, subtitle, badge, badgeColor, i
   }
 
   return (
-    <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-3 relative hover:shadow-md dark:hover:shadow-slate-900 hover:-translate-y-0.5 transition-all duration-200 ${locked ? 'overflow-hidden' : ''} ${animClass}`}>
+    <div className={`group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-3 relative hover:shadow-lg dark:hover:shadow-slate-900/60 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 ${locked ? 'overflow-hidden' : ''} ${animClass}`}>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</span>
-        <span className="text-slate-400 dark:text-slate-600">{icon}</span>
+        <span className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors duration-200">{icon}</span>
       </div>
       <div className="flex items-end gap-2">
         <span className={`text-3xl font-bold text-slate-900 dark:text-white ${locked ? 'blur-sm select-none' : ''}`}>{value}</span>

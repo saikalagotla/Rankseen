@@ -243,7 +243,7 @@ export default async function DashboardPage() {
       {isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="animate-fade-in flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{bizName}</h1>
@@ -262,6 +262,7 @@ export default async function DashboardPage() {
       {/* Score cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <ScoreCard
+          animClass="animate-fade-in-up"
           title="Maps Rank"
           value={bestRank ? `#${bestRank}` : snapshots.length ? '—' : 'No data'}
           subtitle={
@@ -279,6 +280,7 @@ export default async function DashboardPage() {
           }
         />
         <ScoreCard
+          animClass="animate-fade-in-up delay-75"
           title="AI Visibility"
           value={aiResults.length > 0 ? `${visibleCount}/${unlockedEngines} engines` : 'No data'}
           subtitle={userPlan === 'pro' ? `${totalEngines} engines tracked` : `${totalEngines - unlockedEngines} more on ${userPlanRank === 0 ? 'Starter/Pro' : 'Pro'}`}
@@ -291,6 +293,7 @@ export default async function DashboardPage() {
           }
         />
         <ScoreCard
+          animClass="animate-fade-in-up delay-150"
           title="Citation Health"
           value={citationHealth !== null ? `${citationHealth}%` : 'No data'}
           subtitle={
@@ -311,6 +314,7 @@ export default async function DashboardPage() {
           }
         />
         <ScoreCard
+          animClass="animate-fade-in-up delay-300"
           title="Review Score"
           value={avgRating ? `${avgRating} ★` : totalReviews === 0 ? 'No reviews' : '—'}
           subtitle={
@@ -331,7 +335,7 @@ export default async function DashboardPage() {
       {/* Row 2: Maps Rankings | Citation Health | Weekly Digest */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
         {/* Maps Rankings */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="animate-fade-in-up delay-200 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Google Maps Rankings</h2>
             {!isDemo && <a href="/dashboard/maps" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">View all →</a>}
@@ -376,7 +380,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Citation Health */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="animate-fade-in-up delay-300 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Citation Health</h2>
             {citationIssues > 0 && (
@@ -423,7 +427,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Weekly Digest */}
-        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-6 flex flex-col">
+        <div className="animate-fade-in-up delay-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-6 flex flex-col">
           <div className="flex items-center gap-3 mb-4 pb-4 border-b border-amber-100 dark:border-amber-900/30">
             <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center shrink-0">
               <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20">
@@ -471,7 +475,7 @@ export default async function DashboardPage() {
       {/* Row 3: AI Visibility (2/3) + Growth Advisor (1/3) */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
         {/* AI Visibility preview */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="animate-fade-in-up delay-300 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white text-sm">AI Visibility</h2>
@@ -537,7 +541,7 @@ export default async function DashboardPage() {
 
         {/* Growth Advisor */}
         {isDemo ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-center gap-3">
+          <div className="animate-fade-in-up delay-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-center gap-3">
             <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl flex items-center justify-center">
               <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -554,7 +558,7 @@ export default async function DashboardPage() {
 
       {/* Row 4: Recent Reviews */}
       {reviews.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="animate-fade-in-up delay-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Recent Reviews</h2>
             {!isDemo && <a href="/dashboard/reviews" className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">View all →</a>}

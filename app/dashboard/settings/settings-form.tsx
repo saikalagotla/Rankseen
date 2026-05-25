@@ -143,13 +143,13 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
 
   return (
     <div className="p-8 max-w-3xl mx-auto w-full">
-      <div className="mb-8">
+      <div className="animate-fade-in mb-8">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Settings</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">Manage your business profile, keywords, and account</p>
       </div>
 
       {/* Business Info */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-5">
+      <div className="animate-fade-in-up bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-5">
         <SectionHeader
           title="Business Information"
           description="Used to scan directories, build your canonical NAP, and personalize your reports."
@@ -212,7 +212,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
           <button
             onClick={handleSave}
             disabled={saving}
-            className="text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white px-5 py-2.5 rounded-lg transition-colors"
+            className="text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg transition-all"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -228,7 +228,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
       </div>
 
       {/* Keywords */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-5">
+      <div className="animate-fade-in-up delay-100 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-5">
         <div className="flex items-start justify-between mb-6">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Tracked Keywords</h2>
@@ -288,7 +288,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
       </div>
 
       {/* Plan */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-5">
+      <div className="animate-fade-in-up delay-200 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-5">
         <SectionHeader
           title="Plan &amp; Billing"
           description="Your current plan and upgrade options."
@@ -376,7 +376,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
       </div>
 
       {/* Account */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+      <div className="animate-fade-in-up delay-300 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
         <SectionHeader
           title="Account"
           description="Your login information and account actions."

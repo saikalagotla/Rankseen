@@ -184,7 +184,7 @@ export default async function AIVisibilityPage() {
       {isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="animate-fade-in flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">AI Visibility</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -219,7 +219,7 @@ export default async function AIVisibilityPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="animate-fade-in-up bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Engines tracked</p>
           <p className="text-3xl font-bold text-slate-900 dark:text-white mb-1">
             {unlockedWithData.length} <span className="text-lg text-slate-400 dark:text-slate-500">/ 5</span>
@@ -228,7 +228,7 @@ export default async function AIVisibilityPage() {
             {5 - unlockedWithData.length} {userPlan === 'pro' ? 'not yet scanned' : 'locked by plan'}
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="animate-fade-in-up delay-75 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Mention rate</p>
           <p className={`text-3xl font-bold mb-1 ${hasData ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
             {mentionRate !== null ? `${mentionRate}%` : '—'}
@@ -237,7 +237,7 @@ export default async function AIVisibilityPage() {
             {hasData ? `${totalMentions} of ${totalQueries} test queries` : 'No scan data yet'}
           </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="animate-fade-in-up delay-150 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Best position</p>
           <p className={`text-3xl font-bold mb-1 ${bestPosition ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
             {bestPosition ? `#${bestPosition}` : '—'}
@@ -251,7 +251,7 @@ export default async function AIVisibilityPage() {
       {/* Row 2: Engine cards (2/3) + GEO tips (1/3) */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
         {/* Engine cards */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
+        <div className="animate-fade-in-up delay-200 lg:col-span-2 flex flex-col gap-4">
           {engines.map((engine) => (
             <div
               key={engine.key}
@@ -359,7 +359,7 @@ export default async function AIVisibilityPage() {
         </div>
 
         {/* GEO tips sidebar */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden self-start">
+        <div className="animate-fade-in-up delay-300 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden self-start">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">How to improve AI visibility</h2>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Tailored for {bizName} in {city}</p>

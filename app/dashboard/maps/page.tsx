@@ -127,7 +127,7 @@ export default async function MapsPage() {
       {isDemo && <DemoBanner />}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="animate-fade-in flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Google Maps Rankings</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -143,11 +143,11 @@ export default async function MapsPage() {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { label: 'Keywords tracked', value: String(allKeywords.length), sub: `${allKeywords.length} of 10 slots used`, color: 'text-slate-900 dark:text-white' },
-          { label: 'In top 3', value: hasData ? String(top3) : '—', sub: hasData ? `${Math.round(top3 / Math.max(rankedKws.length, 1) * 100)}% of tracked` : 'No data yet', color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'Avg rank this week', value: hasData && avgRank ? `#${avgRank}` : '—', sub: hasData ? `${improving} keyword${improving !== 1 ? 's' : ''} improved` : 'Run a scan to see data', color: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Keywords tracked', value: String(allKeywords.length), sub: `${allKeywords.length} of 10 slots used`, color: 'text-slate-900 dark:text-white', delay: '' },
+          { label: 'In top 3', value: hasData ? String(top3) : '—', sub: hasData ? `${Math.round(top3 / Math.max(rankedKws.length, 1) * 100)}% of tracked` : 'No data yet', color: 'text-emerald-600 dark:text-emerald-400', delay: 'delay-75' },
+          { label: 'Avg rank this week', value: hasData && avgRank ? `#${avgRank}` : '—', sub: hasData ? `${improving} keyword${improving !== 1 ? 's' : ''} improved` : 'Run a scan to see data', color: 'text-blue-600 dark:text-blue-400', delay: 'delay-150' },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+          <div key={s.label} className={`animate-fade-in-up ${s.delay} bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5`}>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{s.label}</p>
             <p className={`text-3xl font-bold mb-1 ${s.color}`}>{s.value}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">{s.sub}</p>
@@ -156,7 +156,7 @@ export default async function MapsPage() {
       </div>
 
       {/* Rankings table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-6">
+      <div className="animate-fade-in-up delay-200 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Keyword Rankings</h2>
@@ -225,7 +225,7 @@ export default async function MapsPage() {
       </div>
 
       {/* Competitor Snapshot */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="animate-fade-in-up delay-300 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Competitor Snapshot</h2>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Businesses ranking above you for your tracked keywords</p>
