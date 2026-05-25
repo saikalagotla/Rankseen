@@ -3,6 +3,7 @@ import Nav from './components/nav'
 import PricingCard from './components/pricing-card'
 import AnimateOnScroll from './components/animate-on-scroll'
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
 const features = [
   {
