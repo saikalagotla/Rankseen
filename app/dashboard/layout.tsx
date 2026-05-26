@@ -10,9 +10,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const plan = profile?.plan ?? 'free'
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300" style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300" style={{ fontFamily: 'var(--font-geist-sans, sans-serif)' }}>
       <Sidebar plan={plan} isDemo={isDemo} />
-      <div className="flex-1 ml-60 min-h-screen">
+      <div className="flex-1 ml-60 min-h-screen bg-slate-50 dark:bg-slate-900">
         {children}
       </div>
     </div>
