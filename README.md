@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SpottedHQ
 
-## Getting Started
+Local SEO + AI visibility tracking for small businesses. Tracks Google Maps rankings, checks whether ChatGPT / Perplexity / Google AI / Claude / Bing Copilot recommend a business, scans citation health, and monitors reviews — delivered as a weekly plain-English report.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) + Tailwind CSS 4
+- **Supabase** — auth (Google OAuth) + Postgres with RLS
+- **Stripe** — subscriptions (Starter $19, Pro $49, 14-day trial)
+- **SerpAPI** — Google Maps rank + Google AI Overview / Bing checks
+- **Mixpanel + Vercel Analytics** — product analytics
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy these into `.env.local` (and Vercel for production):
 
-## Learn More
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only; Stripe webhook plan updates (bypasses RLS) |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Stripe API + webhook signature |
+| `STRIPE_STARTER_PRICE_ID` / `STRIPE_PRO_PRICE_ID` | Subscription prices |
+| `NEXT_PUBLIC_APP_URL` | Canonical origin for redirects + sitemap |
+| `SERP_API_KEY` | Maps rank, Google AI Overview, Bing Copilot checks |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `PERPLEXITY_API_KEY` | AI engine visibility checks |
+| `YELP_API_KEY` | Review + citation scans |
+| `OWNER_EMAIL` | Gates the internal `/generate` prospect-snapshot tool |
+| `NEXT_PUBLIC_MIXPANEL_TOKEN` | Analytics |
 
-To learn more about Next.js, take a look at the following resources:
+## Key routes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/` — landing page (pricing, features)
+- `/setup` → `/login` → `/onboarding` — signup funnel
+- `/dashboard` — main app (shows demo data when logged out)
+- `/generate` — internal (owner-only) tool that creates shareable prospect snapshots
+- `/snapshot/[token]` — public prospect report used for outreach
+- `/api/webhook` — Stripe webhook (updates `profiles.plan` via service role)

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 function planFromPriceId(priceId: string): 'starter' | 'pro' | null {
   if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return 'starter'
@@ -11,6 +11,11 @@ function planFromPriceId(priceId: string): 'starter' | 'pro' | null {
 export async function POST(request: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // RLS blocks the anon client here (webhooks carry no user session), so
+    // without the service role key every profile update would silently no-op.
+    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured' }, { status: 503 })
   }
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
   const body = await request.text()
@@ -23,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
     const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
     const priceId = sub.items.data[0]?.price?.id
 
-    if (sub.status === 'active' && priceId) {
+    if ((sub.status === 'active' || sub.status === 'trialing') && priceId) {
       const plan = planFromPriceId(priceId)
       if (plan) {
         await supabase

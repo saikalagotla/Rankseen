@@ -73,12 +73,13 @@ export async function POST(req: Request) {
   }
 
   // ── Save and return token ────────────────────────────────────────────────
-  const { data, error } = await supabase
+  // Generate the token here instead of using INSERT..RETURNING — the table has
+  // no SELECT policy anymore, so RETURNING would be blocked by RLS.
+  const token = crypto.randomUUID()
+  const { error } = await supabase
     .from('prospect_snapshots')
-    .insert({ business_name: businessName, business_type: businessType ?? null, city_state: cityState, keywords, rank_data: rankData, ai_data: aiData })
-    .select('token')
-    .single()
+    .insert({ token, business_name: businessName, business_type: businessType ?? null, city_state: cityState, keywords, rank_data: rankData, ai_data: aiData })
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json({ token: data.token })
+  return Response.json({ token })
 }

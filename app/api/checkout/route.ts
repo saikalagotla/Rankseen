@@ -30,7 +30,14 @@ export async function POST(request: NextRequest) {
     line_items: [{ price: priceId, quantity: 1 }],
     customer_email: user.email,
     client_reference_id: user.id,
-    success_url: `${origin}/dashboard/upgrade?success=1`,
+    // Landing page promises "14-day free trial. No credit card required" —
+    // keep checkout consistent with that claim.
+    payment_method_collection: 'if_required',
+    subscription_data: {
+      trial_period_days: 14,
+      trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
+    },
+    success_url: `${origin}/dashboard/upgrade?success=1&plan=${plan}`,
     cancel_url: `${origin}/dashboard/settings`,
     metadata: { user_id: user.id, plan },
   })

@@ -61,6 +61,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
   const [signingOut, setSigningOut] = useState(false)
   const [upgrading, setUpgrading] = useState<'starter' | 'pro' | false>(false)
   const [upgradeError, setUpgradeError] = useState('')
+  const [openingPortal, setOpeningPortal] = useState(false)
 
   async function handleSave() {
     setSaving(true)
@@ -130,6 +131,20 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
     } catch (e) {
       setUpgradeError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
       setUpgrading(false)
+    }
+  }
+
+  async function handleManageBilling() {
+    setOpeningPortal(true)
+    setUpgradeError('')
+    try {
+      const res = await fetch('/api/portal', { method: 'POST' })
+      const { url, error } = await res.json()
+      if (error) throw new Error(error)
+      window.location.href = url
+    } catch (e) {
+      setUpgradeError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+      setOpeningPortal(false)
     }
   }
 
@@ -368,6 +383,15 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
             </div>
           )
         })()}
+        {(profile?.plan === 'starter' || profile?.plan === 'pro') && (
+          <button
+            onClick={handleManageBilling}
+            disabled={openingPortal}
+            className="mt-4 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 transition-colors"
+          >
+            {openingPortal ? 'Opening…' : 'Manage billing & cancel subscription →'}
+          </button>
+        )}
         {upgradeError && (
           <p className="mt-3 text-xs text-red-500 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-lg px-3.5 py-2.5">
             {upgradeError}

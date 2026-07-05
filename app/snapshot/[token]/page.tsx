@@ -43,11 +43,9 @@ export default async function SnapshotPage({
   const { token } = await params
   const supabase = await createClient()
 
-  const { data } = await supabase
-    .from('prospect_snapshots')
-    .select('business_name, business_type, city_state, keywords, rank_data, ai_data, created_at')
-    .eq('token', token)
-    .single()
+  // Table reads are locked down — snapshots are only reachable via this
+  // token-keyed security-definer RPC.
+  const { data } = await supabase.rpc('get_snapshot_data', { p_token: token })
 
   if (!data) notFound()
 

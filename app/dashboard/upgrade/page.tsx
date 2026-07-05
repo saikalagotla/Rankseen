@@ -1,10 +1,23 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-export default async function UpgradePage({ searchParams }: { searchParams: Promise<{ success?: string }> }) {
-  const { success } = await searchParams
+const PLAN_COPY: Record<string, { name: string; blurb: string }> = {
+  starter: {
+    name: 'Starter',
+    blurb: '10 keywords, 3 AI engines, and competitor snapshots are now unlocked.',
+  },
+  pro: {
+    name: 'Pro',
+    blurb: 'Unlimited keywords, all 5 AI engines, and weekly reports are now unlocked.',
+  },
+}
+
+export default async function UpgradePage({ searchParams }: { searchParams: Promise<{ success?: string; plan?: string }> }) {
+  const { success, plan } = await searchParams
 
   if (success !== '1') redirect('/dashboard')
+
+  const copy = PLAN_COPY[plan ?? ''] ?? PLAN_COPY.pro
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
@@ -13,9 +26,9 @@ export default async function UpgradePage({ searchParams }: { searchParams: Prom
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">You&apos;re on Pro!</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">You&apos;re on {copy.name}!</h1>
       <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
-        Unlimited keywords, all 5 AI engines, and weekly reports are now unlocked.
+        {copy.blurb} Your 14-day free trial has started.
       </p>
       <Link
         href="/dashboard"
