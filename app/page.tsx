@@ -263,6 +263,7 @@ export default async function LandingPage({
             <Link href="#features" className="hover:text-slate-900 dark:hover:text-white transition-colors">Features</Link>
             <Link href="#pricing" className="hover:text-slate-900 dark:hover:text-white transition-colors">Pricing</Link>
             <Link href="/dashboard" className="hover:text-slate-900 dark:hover:text-white transition-colors">Demo</Link>
+            <Link href="/support" className="hover:text-slate-900 dark:hover:text-white transition-colors">Support</Link>
             <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white transition-colors">Terms</Link>
           </div>
