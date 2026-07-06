@@ -248,6 +248,115 @@ export default async function AIVisibilityPage() {
         </div>
       </div>
 
+      {/* AI Competitor Snapshot — leaderboard + per-engine side by side */}
+      <div className="mb-6">
+      {(() => {
+        if (aiCompetitors.length === 0) return (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="font-semibold text-slate-900 dark:text-white text-sm">AI Competitor Snapshot</h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Businesses AI engines recommend instead of or alongside you</p>
+            </div>
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-slate-400 dark:text-slate-500 mb-1">No competitor data yet.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Run an AI scan to see who&apos;s being recommended.</p>
+            </div>
+          </div>
+        )
+
+        const freq = new Map<string, { count: number; engines: Set<string> }>()
+        for (const c of aiCompetitors) {
+          const key = c.competitor_name
+          if (!freq.has(key)) freq.set(key, { count: 0, engines: new Set() })
+          freq.get(key)!.count++
+          freq.get(key)!.engines.add(c.engine)
+        }
+        const leaderboard = Array.from(freq.entries())
+          .sort((a, b) => b[1].count - a[1].count)
+          .slice(0, 8)
+
+        const ENGINE_LABELS: Record<string, string> = {
+          google_ai: 'Google AI', claude: 'Claude', chatgpt: 'ChatGPT', bing: 'Bing',
+        }
+
+        const byEngineComp = new Map<string, typeof aiCompetitors>()
+        for (const c of aiCompetitors) {
+          if (!byEngineComp.has(c.engine)) byEngineComp.set(c.engine, [])
+          byEngineComp.get(c.engine)!.push(c)
+        }
+
+        return (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="font-semibold text-slate-900 dark:text-white text-sm">AI Competitor Snapshot</h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Businesses AI engines recommend instead of or alongside you</p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
+              {/* Leaderboard */}
+              <div className="px-6 py-5">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">Most frequently mentioned</p>
+                <div className="space-y-2.5">
+                  {leaderboard.map(([name, { count, engines }], i) => (
+                    <div key={name} className="flex items-center gap-3">
+                      <span className={`w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center shrink-0 ring-1 ${
+                        i === 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 ring-amber-200 dark:ring-amber-800'
+                        : i <= 2 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-800'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 ring-slate-200 dark:ring-slate-700'
+                      }`}>{i + 1}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 font-medium truncate">{name}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {Array.from(engines).map(e => (
+                            <span key={e} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">
+                              {ENGINE_LABELS[e] ?? e}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0">{count}×</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Per-engine breakdown */}
+              <div className="divide-y divide-slate-50 dark:divide-slate-800">
+                {Array.from(byEngineComp.entries()).map(([engine, comps]) => {
+                  const seen = new Map<string, number>()
+                  for (const c of comps) {
+                    if (!seen.has(c.competitor_name) || seen.get(c.competitor_name)! > c.position) {
+                      seen.set(c.competitor_name, c.position)
+                    }
+                  }
+                  const unique = Array.from(seen.entries())
+                    .sort((a, b) => a[1] - b[1])
+                    .slice(0, 5)
+                  return (
+                    <div key={engine} className="px-6 py-4">
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">{ENGINE_LABELS[engine] ?? engine}</p>
+                      <div className="flex flex-col gap-2">
+                        {unique.map(([name, position]) => (
+                          <div key={name} className="flex items-center gap-3">
+                            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold ring-1 shrink-0 ${
+                              position === 1 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 ring-amber-200 dark:ring-amber-800'
+                              : position <= 3 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-800'
+                              : 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 ring-blue-200 dark:ring-blue-800'
+                            }`}>#{position}</span>
+                            <span className="text-sm text-slate-700 dark:text-slate-300">{name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+      </div>
+
       {/* Row 2: Engine cards (2/3) + GEO tips (1/3) */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
         {/* Engine cards */}
@@ -378,112 +487,6 @@ export default async function AIVisibilityPage() {
         </div>
       </div>
 
-      {/* AI Competitor Snapshot — leaderboard + per-engine side by side */}
-      {(() => {
-        if (aiCompetitors.length === 0) return (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="font-semibold text-slate-900 dark:text-white text-sm">AI Competitor Snapshot</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Businesses AI engines recommend instead of or alongside you</p>
-            </div>
-            <div className="px-6 py-10 text-center">
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-1">No competitor data yet.</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Run an AI scan to see who&apos;s being recommended.</p>
-            </div>
-          </div>
-        )
-
-        const freq = new Map<string, { count: number; engines: Set<string> }>()
-        for (const c of aiCompetitors) {
-          const key = c.competitor_name
-          if (!freq.has(key)) freq.set(key, { count: 0, engines: new Set() })
-          freq.get(key)!.count++
-          freq.get(key)!.engines.add(c.engine)
-        }
-        const leaderboard = Array.from(freq.entries())
-          .sort((a, b) => b[1].count - a[1].count)
-          .slice(0, 8)
-
-        const ENGINE_LABELS: Record<string, string> = {
-          google_ai: 'Google AI', claude: 'Claude', chatgpt: 'ChatGPT', bing: 'Bing',
-        }
-
-        const byEngineComp = new Map<string, typeof aiCompetitors>()
-        for (const c of aiCompetitors) {
-          if (!byEngineComp.has(c.engine)) byEngineComp.set(c.engine, [])
-          byEngineComp.get(c.engine)!.push(c)
-        }
-
-        return (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="font-semibold text-slate-900 dark:text-white text-sm">AI Competitor Snapshot</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Businesses AI engines recommend instead of or alongside you</p>
-            </div>
-
-            <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
-              {/* Leaderboard */}
-              <div className="px-6 py-5">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">Most frequently mentioned</p>
-                <div className="space-y-2.5">
-                  {leaderboard.map(([name, { count, engines }], i) => (
-                    <div key={name} className="flex items-center gap-3">
-                      <span className={`w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center shrink-0 ring-1 ${
-                        i === 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 ring-amber-200 dark:ring-amber-800'
-                        : i <= 2 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-800'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 ring-slate-200 dark:ring-slate-700'
-                      }`}>{i + 1}</span>
-                      <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 font-medium truncate">{name}</span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex gap-1 flex-wrap justify-end">
-                          {Array.from(engines).map(e => (
-                            <span key={e} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">
-                              {ENGINE_LABELS[e] ?? e}
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0">{count}×</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Per-engine breakdown */}
-              <div className="divide-y divide-slate-50 dark:divide-slate-800">
-                {Array.from(byEngineComp.entries()).map(([engine, comps]) => {
-                  const seen = new Map<string, number>()
-                  for (const c of comps) {
-                    if (!seen.has(c.competitor_name) || seen.get(c.competitor_name)! > c.position) {
-                      seen.set(c.competitor_name, c.position)
-                    }
-                  }
-                  const unique = Array.from(seen.entries())
-                    .sort((a, b) => a[1] - b[1])
-                    .slice(0, 5)
-                  return (
-                    <div key={engine} className="px-6 py-4">
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">{ENGINE_LABELS[engine] ?? engine}</p>
-                      <div className="flex flex-col gap-2">
-                        {unique.map(([name, position]) => (
-                          <div key={name} className="flex items-center gap-3">
-                            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold ring-1 shrink-0 ${
-                              position === 1 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 ring-amber-200 dark:ring-amber-800'
-                              : position <= 3 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-800'
-                              : 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 ring-blue-200 dark:ring-blue-800'
-                            }`}>#{position}</span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">{name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        )
-      })()}
     </div>
   )
 }
