@@ -83,6 +83,11 @@ function matchesName(normText: string, variants: string[]): boolean {
   })
 }
 
+// Reusable across scans: does `text` mention this business by name (variant-aware)?
+export function nameMentionedIn(text: string, name: string): boolean {
+  return matchesName(normalizeForMatch(text), nameVariants(name))
+}
+
 // Extract other businesses mentioned in a numbered/bulleted AI list response.
 function parseCompetitors(
   text: string,

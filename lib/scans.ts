@@ -20,6 +20,7 @@ export type CitationSnapshot = {
   category: string
   status: string
   issue: string | null
+  listing_url: string | null
   scan_date: string
 }
 
@@ -48,6 +49,22 @@ export type StoredReview = {
   replied: boolean
   reply_text: string | null
   url: string | null
+}
+
+export type ContentSignal = {
+  kind: 'website' | 'listicle' | 'reddit'
+  title: string | null
+  url: string | null
+  mentioned: boolean | null
+  detail: {
+    // website audit
+    reachable?: boolean
+    score?: number
+    checks?: Array<{ id: string; label: string; passed: boolean; fix: string }>
+    // listicle / reddit
+    snippet?: string | null
+  } | null
+  scan_date: string
 }
 
 export async function getRankSnapshots(userId: string, weeksBack = 8): Promise<RankSnapshot[]> {
@@ -99,11 +116,33 @@ export async function getLatestCitations(userId: string): Promise<CitationSnapsh
 
   const { data } = await supabase
     .from('citation_snapshots')
-    .select('platform, category, status, issue, scan_date')
+    .select('platform, category, status, issue, listing_url, scan_date')
     .eq('user_id', userId)
     .eq('scan_date', latest.scan_date)
 
   return (data ?? []) as CitationSnapshot[]
+}
+
+export async function getLatestContentSignals(userId: string): Promise<ContentSignal[]> {
+  const supabase = await createClient()
+
+  const { data: latest } = await supabase
+    .from('content_signals')
+    .select('scan_date')
+    .eq('user_id', userId)
+    .order('scan_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!latest) return []
+
+  const { data } = await supabase
+    .from('content_signals')
+    .select('kind, title, url, mentioned, detail, scan_date')
+    .eq('user_id', userId)
+    .eq('scan_date', latest.scan_date)
+
+  return (data ?? []) as ContentSignal[]
 }
 
 export async function getReviews(userId: string, limit = 20): Promise<StoredReview[]> {

@@ -8,7 +8,6 @@ const CITATION_PLATFORMS = [
   { name: 'Facebook', category: 'Social', domain: 'facebook.com', url: 'https://business.facebook.com' },
   { name: 'Foursquare', category: 'Directory', domain: 'foursquare.com', url: 'https://foursquare.com/add-place' },
   { name: 'Yellow Pages', category: 'Directory', domain: 'yellowpages.com', url: 'https://www.yellowpages.com/add-listing' },
-  { name: 'Nextdoor', category: 'Directory', domain: 'nextdoor.com', url: 'https://business.nextdoor.com' },
 ]
 
 export async function POST() {
@@ -40,7 +39,7 @@ export async function POST() {
     const r = results[i]
     const outcome = r.status === 'fulfilled'
       ? r.value
-      : { status: 'missing' as const, issue: undefined }
+      : { status: 'missing' as const, issue: undefined, url: undefined }
 
     return {
       user_id: user.id,
@@ -48,6 +47,7 @@ export async function POST() {
       category: p.category,
       status: outcome.status,
       issue: outcome.issue ?? null,
+      listing_url: outcome.url ?? null,
       scan_date: scanDate,
     }
   })

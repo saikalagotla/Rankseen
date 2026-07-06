@@ -6,6 +6,7 @@ export type Profile = {
   business_type: string | null
   city_state: string | null
   gbp_url: string | null
+  website: string | null
   phone: string | null
   plan: string
   keywords: string[]
@@ -23,7 +24,7 @@ export async function getProfile(): Promise<Profile | null> {
     if (!user) return null
     const { data } = await supabase
       .from('profiles')
-      .select('id, business_name, business_type, city_state, gbp_url, phone, plan, keywords, place_id, yelp_place_id, google_reviews_synced_at, yelp_reviews_synced_at, preview_token')
+      .select('id, business_name, business_type, city_state, gbp_url, website, phone, plan, keywords, place_id, yelp_place_id, google_reviews_synced_at, yelp_reviews_synced_at, preview_token')
       .eq('id', user.id)
       .single()
     return (data as Profile) ?? null

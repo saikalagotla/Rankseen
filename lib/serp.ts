@@ -86,6 +86,7 @@ export async function checkMapsRank(
 export interface CitationCheckResult {
   status: 'ok' | 'warn' | 'missing'
   issue?: string
+  url?: string  // direct link to the business's listing on this directory
 }
 
 // GBP listings aren't indexed at business.google.com, so we check via the
@@ -157,19 +158,22 @@ export async function checkCitation(
   if (!res.ok) return { status: 'missing' }
 
   const data = await res.json()
-  const results: Array<{ title?: string; snippet?: string }> = data.organic_results ?? []
+  const results: Array<{ title?: string; snippet?: string; link?: string }> = data.organic_results ?? []
 
   if (results.length === 0) return { status: 'missing' }
 
   const bizLower = businessName.toLowerCase()
-  const exactMatch = results.some(r =>
+  const matched = results.find(r =>
     r.title?.toLowerCase().includes(bizLower) ||
     r.snippet?.toLowerCase().includes(bizLower)
   )
 
-  if (exactMatch) return { status: 'ok' }
+  // The matching organic result's link is the business's actual listing page
+  // on this directory (e.g. yelp.com/biz/...), not the directory homepage.
+  if (matched) return { status: 'ok', url: matched.link }
   return {
     status: 'warn',
     issue: `Listing found on ${platform} but the name in search results may not match exactly. Log in to verify.`,
+    url: results[0]?.link,
   }
 }

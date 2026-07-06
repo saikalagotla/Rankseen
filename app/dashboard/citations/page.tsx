@@ -11,7 +11,6 @@ const PLATFORM_URLS: Record<string, string> = {
   'Facebook': 'https://business.facebook.com',
   'Foursquare': 'https://foursquare.com/add-place',
   'Yellow Pages': 'https://www.yellowpages.com/add-listing',
-  'Nextdoor': 'https://business.nextdoor.com',
 }
 
 const MANUAL_PLATFORMS = [
@@ -157,14 +156,29 @@ export default async function CitationsPage() {
                           <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{c.platform}</span>
                           <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{c.category}</span>
                         </div>
-                        <a
-                          href={PLATFORM_URLS[c.platform] ?? '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline shrink-0"
-                        >
-                          {c.status === 'missing' ? 'Add listing →' : 'View / edit →'}
-                        </a>
+                        {(() => {
+                          // Deep-link to the actual listing when the scan captured
+                          // its URL. Google Business Profile is edited via its
+                          // dashboard, so it always uses the platform link.
+                          const isGBP = c.platform === 'Google Business Profile'
+                          const deepLink = c.status !== 'missing' && !isGBP ? c.listing_url : null
+                          const href = deepLink ?? PLATFORM_URLS[c.platform] ?? '#'
+                          const label = c.status === 'missing'
+                            ? 'Add listing →'
+                            : deepLink
+                              ? 'View listing →'
+                              : 'Manage →'
+                          return (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline shrink-0"
+                            >
+                              {label}
+                            </a>
+                          )
+                        })()}
                       </div>
 
                       {c.status === 'missing' ? (

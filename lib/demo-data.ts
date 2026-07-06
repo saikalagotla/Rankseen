@@ -62,12 +62,37 @@ export const DEMO_AI_COMPETITORS = [
 ]
 
 export const DEMO_CITATIONS = [
-  { platform: 'Google', status: 'ok', issue: null, category: 'search', scan_date: '2026-05-19' },
-  { platform: 'Yelp', status: 'warn', issue: 'Phone number format differs — update to match Google.', category: 'review', scan_date: '2026-05-19' },
-  { platform: 'Facebook', status: 'ok', issue: null, category: 'social', scan_date: '2026-05-19' },
-  { platform: 'Foursquare', status: 'warn', issue: 'Address abbreviation mismatch.', category: 'directory', scan_date: '2026-05-19' },
-  { platform: 'TripAdvisor', status: 'ok', issue: null, category: 'review', scan_date: '2026-05-19' },
-  { platform: 'Yellow Pages', status: 'missing', issue: null, category: 'directory', scan_date: '2026-05-19' },
+  { platform: 'Google', status: 'ok', issue: null, category: 'search', listing_url: null, scan_date: '2026-05-19' },
+  { platform: 'Yelp', status: 'warn', issue: 'Phone number format differs — update to match Google.', category: 'review', listing_url: 'https://www.yelp.com/biz/the-fade-room-austin', scan_date: '2026-05-19' },
+  { platform: 'Facebook', status: 'ok', issue: null, category: 'social', listing_url: 'https://www.facebook.com/thefaderoomatx', scan_date: '2026-05-19' },
+  { platform: 'Foursquare', status: 'warn', issue: 'Address abbreviation mismatch.', category: 'directory', listing_url: 'https://foursquare.com/v/the-fade-room', scan_date: '2026-05-19' },
+  { platform: 'TripAdvisor', status: 'ok', issue: null, category: 'review', listing_url: 'https://www.tripadvisor.com/the-fade-room', scan_date: '2026-05-19' },
+  { platform: 'Yellow Pages', status: 'missing', issue: null, category: 'directory', listing_url: null, scan_date: '2026-05-19' },
+]
+
+export const DEMO_CONTENT = [
+  {
+    kind: 'website', title: 'thefaderoom.com', url: 'https://thefaderoom.com', mentioned: true, scan_date: '2026-05-19',
+    detail: {
+      reachable: true, score: 67, snippet: null,
+      checks: [
+        { id: 'schema', label: 'LocalBusiness schema markup', passed: false, fix: 'Add JSON-LD LocalBusiness schema to your homepage (name, address, phone, hours, geo, url). It is the clearest way to tell AI assistants your exact business details.' },
+        { id: 'name', label: 'Business name in page text', passed: true, fix: '' },
+        { id: 'city', label: 'City named on the homepage', passed: true, fix: '' },
+        { id: 'phone', label: 'Phone number on the page', passed: false, fix: 'Show your phone number as selectable text (not only inside an image), and make sure it matches your Google listing exactly.' },
+        { id: 'title', label: 'Descriptive page title', passed: true, fix: '' },
+        { id: 'meta', label: 'Meta description', passed: true, fix: '' },
+        { id: 'about', label: 'About / Services page', passed: true, fix: '' },
+        { id: 'https', label: 'Secure (HTTPS)', passed: true, fix: '' },
+        { id: 'mobile', label: 'Mobile-friendly viewport', passed: false, fix: 'Add a responsive viewport meta tag so the site renders properly on phones — most local searches happen on mobile.' },
+      ],
+    },
+  },
+  { kind: 'listicle', title: 'The 15 Best Barbershops in Austin (2026) — Austin Monthly', url: 'https://www.austinmonthly.com/best-barbershops-austin', mentioned: true, scan_date: '2026-05-19', detail: { snippet: 'Our editors picked the top spots for a fresh cut, from South Congress to the East Side…' } },
+  { kind: 'listicle', title: '10 Best Barber Shops in Austin, TX — Expertise.com', url: 'https://www.expertise.com/tx/austin/barber-shops', mentioned: false, scan_date: '2026-05-19', detail: { snippet: 'We reviewed 42 barber shops and picked the top 10 based on reputation, credibility, and experience…' } },
+  { kind: 'listicle', title: 'Where to Get the Best Fade in Austin — Do512', url: 'https://do512.com/best-fade-austin', mentioned: false, scan_date: '2026-05-19', detail: { snippet: 'A neighborhood-by-neighborhood guide to Austin’s sharpest fades…' } },
+  { kind: 'reddit', title: 'Best barbershop in South Austin? : r/Austin', url: 'https://www.reddit.com/r/Austin/comments/best-barbershop-south', mentioned: true, scan_date: '2026-05-19', detail: { snippet: 'A few folks recommend The Fade Room on South Congress — great with skin fades…' } },
+  { kind: 'reddit', title: 'Recommendations for a good barber near downtown? : r/austinfood', url: 'https://www.reddit.com/r/Austin/comments/barber-downtown', mentioned: false, scan_date: '2026-05-19', detail: { snippet: 'Looking for someone who can do a classic taper, downtown-ish…' } },
 ]
 
 export const DEMO_REVIEWS = [

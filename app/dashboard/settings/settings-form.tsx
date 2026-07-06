@@ -46,6 +46,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
     type: profile?.business_type ?? 'Barbershop',
     city: profile?.city_state ?? '',
     gbp: profile?.gbp_url ?? '',
+    website: profile?.website ?? '',
     phone: profile?.phone ?? '',
   })
   const [saved, setSaved] = useState(false)
@@ -76,6 +77,7 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
           business_type: business.type,
           city_state: business.city.trim() || null,
           gbp_url: business.gbp.trim() || null,
+          website: business.website.trim() || null,
           phone: business.phone.trim() || null,
           keywords,
         })
@@ -219,6 +221,16 @@ export default function SettingsForm({ userId, userName, userEmail, userAvatar, 
               />
             </Field>
           </div>
+          <Field label="Website URL">
+            <input
+              type="url"
+              className={inputCls}
+              value={business.website}
+              onChange={e => setBusiness(b => ({ ...b, website: e.target.value }))}
+              placeholder="https://yourbusiness.com"
+            />
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">Used for the Content tab&apos;s website &amp; schema audit.</p>
+          </Field>
         </div>
         {saveError && (
           <p className="mt-3 text-xs text-red-500">{saveError}</p>
