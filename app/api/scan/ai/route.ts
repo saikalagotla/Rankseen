@@ -3,6 +3,7 @@ import { getProfile } from '@/lib/profile'
 import { getWeekStart } from '@/lib/serp'
 import {
   generateAIQueries,
+  toAIQuery,
   checkPerplexity,
   checkClaude,
   checkChatGPT,
@@ -26,9 +27,13 @@ export async function POST() {
   const serpApiKey = process.env.SERP_API_KEY
   const scanWeek = getWeekStart(new Date())
   const bizName = profile.business_name ?? profile.business_type
-  const queries = profile.keywords?.length
-    ? profile.keywords
-    : generateAIQueries(profile.business_type, profile.city_state)
+  // AI assistants answer natural questions, not Maps search terms — ground each
+  // tracked keyword in the business's city before asking.
+  const queries = (
+    profile.keywords?.length
+      ? profile.keywords
+      : generateAIQueries(profile.business_type, profile.city_state)
+  ).map(q => toAIQuery(q, profile.city_state!))
 
   // Engines available (Pro gates ChatGPT, Bing to paid plan)
   const engines: Array<{ name: string; runner: EngineRunner; requiresKey: string }> = [

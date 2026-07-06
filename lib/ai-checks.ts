@@ -6,6 +6,23 @@ export interface AICheckResult {
   triggered?: boolean  // false = AI overview didn't appear for this query (google_ai only)
 }
 
+// Turn a Google Maps keyword into a question worth asking an AI assistant.
+// "near me" has no meaning to an API call with no location, and Maps terms like
+// "smoked meat Austin TX" aren't how people phrase questions — so we ground
+// every query in the business's city.
+export function toAIQuery(keyword: string, cityState: string): string {
+  const city = cityState.split(',')[0].trim()
+  let q = keyword.trim()
+
+  if (/\bnear me\b/i.test(q)) {
+    q = q.replace(/\s*\bnear me\b\s*/i, city ? ` in ${city} ` : ' ')
+  } else if (city && !q.toLowerCase().includes(city.toLowerCase())) {
+    q = `${q} in ${city}`
+  }
+
+  return q.replace(/\s+/g, ' ').trim()
+}
+
 export function generateAIQueries(businessType: string, cityState: string): string[] {
   const type = businessType.toLowerCase()
   const city = cityState.split(',')[0].trim()
@@ -17,12 +34,61 @@ export function generateAIQueries(businessType: string, cityState: string): stri
   ]
 }
 
+// Generic words that get dropped when deriving a business's distinctive "core"
+// name — so "Franklin Barbecue" also matches a bare "Franklin".
+const NAME_DESCRIPTORS = new Set([
+  'barbecue', 'bbq', 'restaurant', 'grill', 'grille', 'cafe', 'coffee', 'bar',
+  'kitchen', 'co', 'company', 'llc', 'inc', 'shop', 'store', 'salon', 'spa',
+  'studio', 'gym', 'fitness', 'clinic', 'dental', 'dentistry', 'law', 'group',
+  'services', 'the', 'and',
+])
+
+// Normalize a string so name variants compare equal: lowercase, expand common
+// abbreviations (BBQ→barbecue, &→and), drop possessives, and reduce punctuation
+// to single spaces. "Franklin's BBQ!" and "Franklin Barbecue" both become
+// "franklin barbecue".
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/'s\b/g, '')          // possessive: "Franklin's" → "Franklin"
+    .replace(/\bbbq\b/g, 'barbecue')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')   // punctuation → spaces
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// The accepted forms of a business name: the full normalized name, plus a
+// distinctive core with trailing generic descriptors stripped (only if that
+// core is long enough to be unambiguous on its own).
+function nameVariants(name: string): string[] {
+  const norm = normalizeForMatch(name)
+  const variants = new Set<string>()
+  if (norm) variants.add(norm)
+
+  const tokens = norm.split(' ')
+  while (tokens.length > 1 && NAME_DESCRIPTORS.has(tokens[tokens.length - 1])) tokens.pop()
+  const core = tokens.join(' ')
+  if (core && core !== norm && core.length >= 5) variants.add(core)
+
+  return [...variants]
+}
+
+// Whole-word/phrase match of any variant against already-normalized text —
+// avoids substring false positives ("Franklin" inside "Franklindale").
+function matchesName(normText: string, variants: string[]): boolean {
+  return variants.some(v => {
+    const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(`(^| )${escaped}( |$)`).test(normText)
+  })
+}
+
 // Extract other businesses mentioned in a numbered/bulleted AI list response.
 function parseCompetitors(
   text: string,
   ownName: string
 ): Array<{ name: string; position: number }> {
-  const ownLower = ownName.toLowerCase().trim()
+  const variants = nameVariants(ownName)
   const competitors: Array<{ name: string; position: number }> = []
   for (const line of text.split('\n')) {
     // Match "1. Business Name" or "1) Business Name", strip markdown bold (**)
@@ -31,8 +97,8 @@ function parseCompetitors(
     const position = parseInt(match[1])
     const name = match[2].trim()
     if (!name) continue
-    const nameLower = name.toLowerCase()
-    if (nameLower.includes(ownLower) || (ownLower.length > 4 && ownLower.includes(nameLower))) continue
+    // Skip lines that are actually the user's own business under a variant name.
+    if (matchesName(normalizeForMatch(name), variants)) continue
     if (competitors.length >= 5) break
     competitors.push({ name, position })
   }
@@ -40,12 +106,11 @@ function parseCompetitors(
 }
 
 function parseMention(text: string, name: string): AICheckResult {
-  const lower = text.toLowerCase()
-  const nameLower = name.toLowerCase()
-
   const competitors = parseCompetitors(text, name)
+  const variants = nameVariants(name)
+  const normText = normalizeForMatch(text)
 
-  if (!lower.includes(nameLower)) {
+  if (!matchesName(normText, variants)) {
     return { mentioned: false, position: null, excerpt: null, competitors }
   }
 
@@ -54,7 +119,7 @@ function parseMention(text: string, name: string): AICheckResult {
   let excerpt: string | null = null
 
   for (const line of lines) {
-    if (line.toLowerCase().includes(nameLower)) {
+    if (matchesName(normalizeForMatch(line), variants)) {
       const match = line.match(/^\s*(\d+)[.)]\s*/)
       position = match ? parseInt(match[1]) : 1
       excerpt = line.trim().slice(0, 200)
@@ -63,8 +128,8 @@ function parseMention(text: string, name: string): AICheckResult {
   }
 
   if (!excerpt) {
-    const idx = lower.indexOf(nameLower)
-    excerpt = text.slice(Math.max(0, idx - 30), idx + name.length + 100).trim()
+    // Name matched across the text but not within a single line — show a snippet.
+    excerpt = text.replace(/\s+/g, ' ').trim().slice(0, 200)
     position = 1
   }
 
@@ -119,6 +184,9 @@ export async function checkClaude(
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
       messages: [{ role: 'user', content: query }],
+      // Ground the answer in live web results — mirrors what a real Claude user
+      // sees for a local query, instead of testing frozen training knowledge.
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
     }),
     cache: 'no-store',
   })
@@ -129,7 +197,13 @@ export async function checkClaude(
   }
 
   const data = await res.json()
-  return parseMention(data.content?.[0]?.text ?? '', businessName)
+  // With web search the response interleaves server_tool_use / web_search_tool_result
+  // blocks with the answer — concatenate every text block to search for a mention.
+  const text = (data.content ?? [])
+    .filter((b: { type: string }) => b.type === 'text')
+    .map((b: { text?: string }) => b.text ?? '')
+    .join('\n')
+  return parseMention(text, businessName)
 }
 
 export async function checkChatGPT(
@@ -146,7 +220,10 @@ export async function checkChatGPT(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      // Search-grounded model: browses the live web like ChatGPT does for local
+      // queries, rather than answering from frozen training knowledge.
+      model: 'gpt-4o-mini-search-preview',
+      web_search_options: {},
       messages: [{ role: 'user', content: query }],
       max_tokens: 1024,
     }),
