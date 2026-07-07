@@ -1,4 +1,5 @@
 import { nameMentionedIn } from './ai-checks'
+import { fetchWithTimeout } from './http'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,14 +32,10 @@ function normalizeUrl(raw: string): string {
 
 async function fetchHtml(url: string, timeoutMs = 8000): Promise<string | null> {
   try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SpottedHQ/1.0; +https://spottedhq.com)' },
       cache: 'no-store',
-      signal: controller.signal,
-    })
-    clearTimeout(timer)
+    }, timeoutMs)
     if (!res.ok) return null
     return await res.text()
   } catch {
@@ -177,7 +174,7 @@ export async function checkListicles(
   const query = `best ${businessType.toLowerCase()} in ${city}`
   const params = new URLSearchParams({ api_key: serpApiKey, engine: 'google', q: query, num: '10' })
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
   if (!res.ok) return []
 
   const data = await res.json()
@@ -218,7 +215,7 @@ export async function checkReddit(
   const query = `site:reddit.com (${businessName} OR "best ${businessType.toLowerCase()}") ${city}`
   const params = new URLSearchParams({ api_key: serpApiKey, engine: 'google', q: query, num: '10' })
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
   if (!res.ok) return []
 
   const data = await res.json()

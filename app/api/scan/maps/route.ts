@@ -3,6 +3,9 @@ import { getProfile } from '@/lib/profile'
 import { checkMapsRank, geocodeCity, getWeekStart } from '@/lib/serp'
 import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
+// External API calls are slow; give the function room beyond the default.
+export const maxDuration = 60
+
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

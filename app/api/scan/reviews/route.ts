@@ -8,6 +8,9 @@ import {
   fetchYelpReviews,
 } from '@/lib/places'
 
+// External API calls are slow; give the function room beyond the default.
+export const maxDuration = 60
+
 const COOLDOWN_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 function cooldownRemaining(lastSyncedAt: string | null): number {

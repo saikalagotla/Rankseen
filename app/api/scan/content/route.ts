@@ -3,6 +3,9 @@ import { getProfile } from '@/lib/profile'
 import { auditWebsite, checkListicles, checkReddit } from '@/lib/content'
 import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
+// External API calls are slow; give the function room beyond the default.
+export const maxDuration = 60
+
 type Row = {
   user_id: string
   kind: 'website' | 'listicle' | 'reddit'

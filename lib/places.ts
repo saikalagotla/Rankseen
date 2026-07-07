@@ -1,4 +1,5 @@
 import { geocodeCity } from './serp'
+import { fetchWithTimeout } from './http'
 
 export interface ReviewRecord {
   external_id: string
@@ -28,7 +29,7 @@ export async function findBusinessDataId(
   if (ll) params.set('ll', ll)
   else params.set('location', cityState || 'United States')
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
   if (!res.ok) return null
 
   const data = await res.json()
@@ -56,7 +57,7 @@ export async function fetchGoogleReviews(dataId: string, apiKey: string): Promis
     sort_by: 'newestFirst',
   })
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
   if (!res.ok) return []
 
   const data = await res.json()
@@ -98,7 +99,7 @@ export async function findYelpBusinessId(
     limit: '5',
   })
 
-  const res = await fetch(`https://api.yelp.com/v3/businesses/search?${params}`, {
+  const res = await fetchWithTimeout(`https://api.yelp.com/v3/businesses/search?${params}`, {
     headers: { Authorization: `Bearer ${apiKey}` },
     cache: 'no-store',
   })
@@ -121,7 +122,7 @@ export async function findYelpBusinessId(
 export async function fetchYelpReviews(businessId: string, apiKey: string): Promise<ReviewRecord[]> {
   const params = new URLSearchParams({ limit: '20', sort_by: 'newest' })
 
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://api.yelp.com/v3/businesses/${encodeURIComponent(businessId)}/reviews?${params}`,
     { headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store' }
   )

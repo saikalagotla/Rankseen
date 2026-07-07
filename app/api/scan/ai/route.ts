@@ -15,6 +15,9 @@ import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-l
 
 type EngineRunner = (query: string, biz: string) => Promise<AICheckResult>
 
+// Web-grounded AI calls are slow; give the function room beyond the default.
+export const maxDuration = 60
+
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -89,39 +92,41 @@ export async function POST() {
     scan_week: string
   }> = []
 
-  for (const engine of engines) {
-    const envKey = process.env[engine.requiresKey]
-    if (!envKey) continue
-
-    const queryResults = await Promise.allSettled(
-      queries.map(q => engine.runner(q, bizName))
+  // Run every (engine, query) pair concurrently — the whole scan then takes as
+  // long as the single slowest call, not the sum of all engines run in series.
+  const tasks = engines
+    .filter(engine => process.env[engine.requiresKey])
+    .flatMap(engine =>
+      queries.map(query => ({ engine: engine.name, query, run: () => engine.runner(query, bizName) }))
     )
 
-    for (let i = 0; i < queries.length; i++) {
-      const r = queryResults[i]
-      const result = r.status === 'fulfilled' ? r.value : null
-      rows.push({
-        user_id: user.id,
-        engine: engine.name,
-        query: queries[i],
-        mentioned: result?.mentioned ?? false,
-        position: result?.position ?? null,
-        // sentinel: '__not_triggered__' means the AI overview didn't appear (google_ai only)
-        excerpt: result?.triggered === false ? '__not_triggered__' : (result?.excerpt ?? null),
-        scan_week: scanWeek,
-      })
+  const settled = await Promise.allSettled(tasks.map(t => t.run()))
 
-      if (r.status === 'fulfilled') {
-        for (const comp of r.value.competitors) {
-          competitorRows.push({
-            user_id: user.id,
-            engine: engine.name,
-            query: queries[i],
-            competitor_name: comp.name,
-            position: comp.position,
-            scan_week: scanWeek,
-          })
-        }
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i]
+    const r = settled[i]
+    const result = r.status === 'fulfilled' ? r.value : null
+    rows.push({
+      user_id: user.id,
+      engine: t.engine,
+      query: t.query,
+      mentioned: result?.mentioned ?? false,
+      position: result?.position ?? null,
+      // sentinel: '__not_triggered__' means the AI overview didn't appear (google_ai only)
+      excerpt: result?.triggered === false ? '__not_triggered__' : (result?.excerpt ?? null),
+      scan_week: scanWeek,
+    })
+
+    if (r.status === 'fulfilled') {
+      for (const comp of r.value.competitors) {
+        competitorRows.push({
+          user_id: user.id,
+          engine: t.engine,
+          query: t.query,
+          competitor_name: comp.name,
+          position: comp.position,
+          scan_week: scanWeek,
+        })
       }
     }
   }

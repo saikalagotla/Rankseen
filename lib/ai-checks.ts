@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './http'
+
 export interface AICheckResult {
   mentioned: boolean
   position: number | null
@@ -163,7 +165,7 @@ export async function checkPerplexity(
   const key = process.env.PERPLEXITY_API_KEY
   if (!key) throw new Error('PERPLEXITY_API_KEY not configured')
 
-  const res = await fetch('https://api.perplexity.ai/chat/completions', {
+  const res = await fetchWithTimeout('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${key}`,
@@ -193,7 +195,7 @@ export async function checkClaude(
   const key = process.env.ANTHROPIC_API_KEY
   if (!key) throw new Error('ANTHROPIC_API_KEY not configured')
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'x-api-key': key,
@@ -233,7 +235,7 @@ export async function checkChatGPT(
   const key = process.env.OPENAI_API_KEY
   if (!key) throw new Error('OPENAI_API_KEY not configured')
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${key}`,
@@ -270,7 +272,7 @@ export async function checkBingCopilot(
     q: query,
   })
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {
     cache: 'no-store',
   })
 
@@ -304,7 +306,7 @@ export async function checkGoogleAIOverview(
     num: '10',
   })
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {
     cache: 'no-store',
   })
 

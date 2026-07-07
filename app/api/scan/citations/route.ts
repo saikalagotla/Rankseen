@@ -3,6 +3,9 @@ import { getProfile } from '@/lib/profile'
 import { checkCitation } from '@/lib/serp'
 import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
+// External API calls are slow; give the function room beyond the default.
+export const maxDuration = 60
+
 const CITATION_PLATFORMS = [
   { name: 'Google Business Profile', category: 'Primary', domain: 'business.google.com', url: 'https://business.google.com' },
   { name: 'Yelp', category: 'Primary', domain: 'yelp.com', url: 'https://biz.yelp.com' },

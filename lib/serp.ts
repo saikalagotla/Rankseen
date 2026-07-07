@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './http'
+
 export function getWeekStart(date: Date): string {
   const d = new Date(date)
   const day = d.getDay()
@@ -17,7 +19,7 @@ export interface RankResult {
 export async function geocodeCity(cityState: string): Promise<string | null> {
   try {
     const q = encodeURIComponent(cityState)
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`,
       { headers: { 'User-Agent': 'SpottedHQ/1.0' }, cache: 'no-store' }
     )
@@ -51,7 +53,7 @@ export async function checkMapsRank(
     params.set('location', location || 'United States')
   }
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {
     cache: 'no-store',
   })
 
@@ -109,7 +111,7 @@ async function checkGBPCitation(
     params.set('location', cityState || 'United States')
   }
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {
     cache: 'no-store',
   })
   if (!res.ok) return { status: 'missing' }
@@ -151,7 +153,7 @@ export async function checkCitation(
     num: '5',
   })
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`, {
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {
     cache: 'no-store',
   })
 
