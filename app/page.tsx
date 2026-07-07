@@ -38,15 +38,6 @@ const features = [
   {
     icon: (
       <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
-    title: 'Weekly Digest',
-    description: 'Every Monday: 3 plain-English things to fix. No login required. Straight to your inbox, ready to act on.',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
       </svg>
     ),
@@ -98,14 +89,14 @@ export default async function LandingPage({
         </div>
         <div className="relative max-w-4xl mx-auto text-center">
           <span className="animate-fade-in-up inline-block bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-xs font-semibold px-3 py-1.5 rounded-full ring-1 ring-emerald-200 dark:ring-emerald-800 mb-6">
-            Local SEO + AI Visibility &mdash; in one weekly report
+            Local SEO + AI Visibility &mdash; in one dashboard
           </span>
           <h1 className="animate-fade-in-up delay-100 text-5xl md:text-6xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight mb-6">
             Know if Google Maps and ChatGPT are sending customers to you&mdash;
             <span className="text-emerald-500"> or your competitor.</span>
           </h1>
           <p className="animate-fade-in-up delay-200 text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            The weekly local SEO report built for business owners, not agencies. Track your Maps rank, AI visibility, and citation health in one place.
+            The local SEO dashboard built for business owners, not agencies. Track your Maps rank, AI visibility, and citation health in one place.
           </p>
           <div className="animate-fade-in-up delay-300">
             <LandingCtaButtons />
@@ -151,45 +142,6 @@ export default async function LandingPage({
         </div>
       </section>
 
-      {/* Weekly briefing preview */}
-      <section className="bg-slate-900 dark:bg-slate-950 border-t border-slate-800 py-20 px-6 transition-colors duration-300">
-        <div className="max-w-4xl mx-auto text-center">
-          <AnimateOnScroll>
-            <h2 className="text-3xl font-bold text-white mb-4">Your weekly briefing, in plain English</h2>
-            <p className="text-slate-400 mb-10">No dashboards to log into. Every Monday, three things to act on &mdash; delivered straight to your inbox.</p>
-          </AnimateOnScroll>
-          <AnimateOnScroll stagger={2}>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-left max-w-2xl mx-auto shadow-2xl shadow-black/20">
-              <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950 rounded-full flex items-center justify-center">
-                  <span className="text-emerald-700 dark:text-emerald-400 font-bold text-sm">SH</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-white text-sm">SpottedHQ Weekly</p>
-                  <p className="text-xs text-slate-400">hello@spottedhq.com &middot; Mon 7:00 AM</p>
-                </div>
-              </div>
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Your weekly briefing &mdash; May 12, 2026</h3>
-              <ol className="flex flex-col gap-4">
-                <li className="flex gap-3 text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-emerald-500 font-bold shrink-0">1.</span>
-                  <span>You moved from <strong>
-#5 to #3</strong> for &ldquo;barbershop near me Austin&rdquo; this week &mdash; keep it up.</span>
-                </li>
-                <li className="flex gap-3 text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-amber-500 font-bold shrink-0">2.</span>
-                  <span>Your Yelp address says &ldquo;1204 South Congress&rdquo; but Google shows &ldquo;1204 S Congress Ave&rdquo; &mdash; fix the Yelp listing to match exactly.</span>
-                </li>
-                <li className="flex gap-3 text-sm text-slate-400">
-                  <span className="font-bold shrink-0">3.</span>
-                  <span>ChatGPT mentioned 3 of your competitors when asked for Austin barbershops. <span className="text-emerald-600 dark:text-emerald-400 font-medium">Upgrade to Pro</span> to see the full AI visibility report.</span>
-                </li>
-              </ol>
-            </div>
-          </AnimateOnScroll>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section id="pricing" className="py-24 px-6 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-5xl mx-auto">
@@ -203,7 +155,7 @@ export default async function LandingPage({
                 name: 'Free',
                 price: '$0',
                 desc: 'Get started tracking your local SEO with no commitment.',
-                features: ['3 keywords tracked', 'Google Maps rank tracking', '2 AI engines (Perplexity + Google AI)', 'Citation health scan', 'Weekly digest'],
+                features: ['3 keywords tracked', 'Google Maps rank tracking', '2 AI engines (Perplexity + Google AI)', 'Citation health scan'],
                 cta: 'Get started free',
                 href: '/setup',
                 hl: false,
