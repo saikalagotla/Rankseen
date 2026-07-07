@@ -88,19 +88,34 @@ export function nameMentionedIn(text: string, name: string): boolean {
   return matchesName(normalizeForMatch(text), nameVariants(name))
 }
 
-// Extract other businesses mentioned in a numbered/bulleted AI list response.
+// Extract other businesses mentioned in a numbered or bulleted AI list response.
 function parseCompetitors(
   text: string,
   ownName: string
 ): Array<{ name: string; position: number }> {
   const variants = nameVariants(ownName)
   const competitors: Array<{ name: string; position: number }> = []
+  let bulletPosition = 0
+
   for (const line of text.split('\n')) {
-    // Match "1. Business Name" or "1) Business Name", strip markdown bold (**)
-    const match = line.match(/^\s*(\d+)[.)]\s*\*{0,2}([^*\n\r]+?)\*{0,2}\s*(?:[-–—:]|$)/)
-    if (!match) continue
-    const position = parseInt(match[1])
-    const name = match[2].trim()
+    let position: number
+    let name: string
+
+    // "1. Business Name" or "1) Business Name" (bold optional)
+    const numbered = line.match(/^\s*(\d+)[.)]\s*\*{0,2}([^*\n\r]+?)\*{0,2}\s*(?:[-–—:]|$)/)
+    if (numbered) {
+      position = parseInt(numbered[1])
+      name = numbered[2].trim()
+    } else {
+      // "- **Business Name**" or "* **Business Name**" — require bold so we don't
+      // pick up prose bullet points. Perplexity and Google AI use this format.
+      const bulleted = line.match(/^\s*[-*]\s*\*\*([^*\n\r]+?)\*\*/)
+      if (!bulleted) continue
+      bulletPosition++
+      position = bulletPosition
+      name = bulleted[1].trim()
+    }
+
     if (!name) continue
     // Skip lines that are actually the user's own business under a variant name.
     if (matchesName(normalizeForMatch(name), variants)) continue
