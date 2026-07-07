@@ -13,7 +13,7 @@ type PreviewData = {
   ai_visibility:  AIRow[]
 }
 
-const ENGINE_ORDER = ['chatgpt', 'google_ai', 'bing', 'claude']
+const ENGINE_ORDER = ['chatgpt', 'google_ai', 'bing', 'claude', 'perplexity']
 
 const ENGINE_LABEL: Record<string, string> = {
   perplexity: 'Perplexity',
