@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { checkMapsRank, geocodeCity, getWeekStart } from '@/lib/serp'
+import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
 export async function POST() {
   const supabase = await createClient()
@@ -16,6 +17,9 @@ export async function POST() {
   if (!profile?.keywords?.length) {
     return Response.json({ error: 'No keywords configured' }, { status: 400 })
   }
+
+  const cooldown = await dailyCooldownRemaining(supabase, user.id, 'maps')
+  if (cooldown > 0) return Response.json({ error: cooldownMessage(cooldown) }, { status: 429 })
 
   const scanWeek = getWeekStart(new Date())
   const businessName = profile.business_name ?? ''
@@ -78,6 +82,8 @@ export async function POST() {
       .eq('scan_week', scanWeek)
     await supabase.from('competitor_snapshots').insert(competitorRows)
   }
+
+  await recordRun(supabase, user.id, 'maps')
 
   const found = rows.filter(r => r.rank !== null).length
   return Response.json({ success: true, scanned: rows.length, ranked: found })

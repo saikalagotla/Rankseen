@@ -11,6 +11,7 @@ import {
   checkGoogleAIOverview,
   type AICheckResult,
 } from '@/lib/ai-checks'
+import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
 type EngineRunner = (query: string, biz: string) => Promise<AICheckResult>
 
@@ -23,6 +24,9 @@ export async function POST() {
   if (!profile?.business_type || !profile?.city_state) {
     return Response.json({ error: 'Business type and city are required' }, { status: 400 })
   }
+
+  const cooldown = await dailyCooldownRemaining(supabase, user.id, 'ai')
+  if (cooldown > 0) return Response.json({ error: cooldownMessage(cooldown) }, { status: 429 })
 
   const serpApiKey = process.env.SERP_API_KEY
   const scanWeek = getWeekStart(new Date())
@@ -148,6 +152,8 @@ export async function POST() {
   if (competitorRows.length > 0) {
     await supabase.from('ai_competitor_snapshots').insert(competitorRows)
   }
+
+  await recordRun(supabase, user.id, 'ai')
 
   const mentioned = rows.filter(r => r.mentioned).length
   return Response.json({ success: true, total: rows.length, mentioned })

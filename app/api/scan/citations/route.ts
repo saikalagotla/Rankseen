@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { checkCitation } from '@/lib/serp'
+import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
 const CITATION_PLATFORMS = [
   { name: 'Google Business Profile', category: 'Primary', domain: 'business.google.com', url: 'https://business.google.com' },
@@ -24,6 +25,9 @@ export async function POST() {
   if (!profile?.business_name || !profile?.city_state) {
     return Response.json({ error: 'Business name and city are required' }, { status: 400 })
   }
+
+  const cooldown = await dailyCooldownRemaining(supabase, user.id, 'citations')
+  if (cooldown > 0) return Response.json({ error: cooldownMessage(cooldown) }, { status: 429 })
 
   const scanDate = new Date().toISOString().split('T')[0]
   const businessName = profile.business_name
@@ -61,6 +65,8 @@ export async function POST() {
 
   const { error } = await supabase.from('citation_snapshots').insert(rows)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  await recordRun(supabase, user.id, 'citations')
 
   const issues = rows.filter(r => r.status !== 'ok').length
   return Response.json({ success: true, total: rows.length, issues })

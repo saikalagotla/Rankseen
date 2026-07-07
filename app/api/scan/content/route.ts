@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
 import { auditWebsite, checkListicles, checkReddit } from '@/lib/content'
+import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
 type Row = {
   user_id: string
@@ -21,6 +22,9 @@ export async function POST() {
   if (!profile?.business_type || !profile?.city_state) {
     return Response.json({ error: 'Business type and city are required' }, { status: 400 })
   }
+
+  const cooldown = await dailyCooldownRemaining(supabase, user.id, 'content')
+  if (cooldown > 0) return Response.json({ error: cooldownMessage(cooldown) }, { status: 429 })
 
   const serpApiKey = process.env.SERP_API_KEY
   const scanDate = new Date().toISOString().split('T')[0]
@@ -67,6 +71,8 @@ export async function POST() {
 
   const { error } = await supabase.from('content_signals').insert(rows)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  await recordRun(supabase, user.id, 'content')
 
   return Response.json({ success: true, total: rows.length })
 }

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
-import { getRankSnapshots, getLatestAIVisibility, getLatestCitations, getReviews } from '@/lib/scans'
+import { getRankSnapshots, getLatestAIVisibility, getLatestCitations, getReviews, getActionPlan, type SavedActionPlan } from '@/lib/scans'
 import ScoreCard from '../components/score-card'
 import ScanTrigger from './components/scan-trigger'
 import UpgradeButton from './components/upgrade-button'
@@ -46,6 +46,7 @@ export default async function DashboardPage() {
   let userPlan: string
   let userPlanRank: number
   let previewToken: string | null = null
+  let actionPlan: SavedActionPlan | null = null
 
   if (isDemo) {
     snapshots = DEMO_SNAPSHOTS as typeof DEMO_SNAPSHOTS
@@ -58,13 +59,15 @@ export default async function DashboardPage() {
     userPlan = DEMO_BIZ.plan
     userPlanRank = 2
   } else {
-    const [profile, snapshotData, aiData, citationData, reviewData] = await Promise.all([
+    const [profile, snapshotData, aiData, citationData, reviewData, savedPlan] = await Promise.all([
       getProfile(),
       getRankSnapshots(user!.id, 2),
       getLatestAIVisibility(user!.id),
       getLatestCitations(user!.id),
       getReviews(user!.id, 3),
+      getActionPlan(user!.id),
     ])
+    actionPlan = savedPlan
 
     const cookieStore = await cookies()
     const hasSkipped = cookieStore.get('onboarding_skipped')?.value === '1'
@@ -552,7 +555,7 @@ export default async function DashboardPage() {
             <Link href="/setup" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Get started free →</Link>
           </div>
         ) : (
-          <GrowthAdvisor />
+          <GrowthAdvisor initialPlan={actionPlan} />
         )}
       </div>
 

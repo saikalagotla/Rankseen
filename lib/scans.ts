@@ -51,6 +51,18 @@ export type StoredReview = {
   url: string | null
 }
 
+export type ActionPlanAction = {
+  priority: number
+  title: string
+  description: string
+  impact: 'high' | 'medium' | 'low'
+}
+
+export type SavedActionPlan = {
+  actions: ActionPlanAction[]
+  generated_at: string
+}
+
 export type ContentSignal = {
   kind: 'website' | 'listicle' | 'reddit'
   title: string | null
@@ -143,6 +155,17 @@ export async function getLatestContentSignals(userId: string): Promise<ContentSi
     .eq('scan_date', latest.scan_date)
 
   return (data ?? []) as ContentSignal[]
+}
+
+export async function getActionPlan(userId: string): Promise<SavedActionPlan | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('action_plans')
+    .select('actions, generated_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  return (data as SavedActionPlan) ?? null
 }
 
 export async function getReviews(userId: string, limit = 20): Promise<StoredReview[]> {

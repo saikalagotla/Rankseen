@@ -9,27 +9,11 @@ type Action = {
   impact: 'high' | 'medium' | 'low'
 }
 
-const CACHE_KEY = 'spottedhq_action_plan'
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000
-
-function loadCached(): Action[] | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const { actions, ts } = JSON.parse(raw)
-    if (Date.now() - ts > CACHE_TTL_MS) return null
-    return actions
-  } catch {
-    return null
-  }
+type Props = {
+  initialPlan: { actions: Action[]; generated_at: string } | null
 }
 
-function saveCache(actions: Action[]) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ actions, ts: Date.now() }))
-  } catch {}
-}
+const DAY_MS = 24 * 60 * 60 * 1000
 
 const impactColors = {
   high: 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400',
@@ -43,23 +27,31 @@ const priorityColors = [
   'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400',
 ]
 
-export default function GrowthAdvisor() {
-  const [actions, setActions] = useState<Action[] | null>(null)
+export default function GrowthAdvisor({ initialPlan }: Props) {
+  const [actions, setActions] = useState<Action[] | null>(initialPlan?.actions ?? null)
+  const [generatedAt, setGeneratedAt] = useState<string | null>(initialPlan?.generated_at ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function generate() {
-    const cached = loadCached()
-    if (cached) { setActions(cached); return }
+  // Once per day — a new plan can only be generated 24h after the last one.
+  const canGenerate = !generatedAt || Date.now() - new Date(generatedAt).getTime() > DAY_MS
+  const generatedLabel = generatedAt
+    ? new Date(generatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null
 
+  async function generate() {
+    if (!canGenerate) return
     setLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/action-plan', { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Failed')
-      setActions(data.actions)
-      saveCache(data.actions)
+      // The server returns the saved plan (with actions) even on cooldown.
+      if (Array.isArray(data.actions)) {
+        setActions(data.actions)
+        if (data.generated_at) setGeneratedAt(data.generated_at)
+      }
+      if (!res.ok && !Array.isArray(data.actions)) throw new Error(data.error ?? 'Failed')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -67,27 +59,27 @@ export default function GrowthAdvisor() {
     }
   }
 
-  function refresh() {
-    localStorage.removeItem(CACHE_KEY)
-    setActions(null)
-    setError(null)
-    generate()
-  }
-
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden h-full flex flex-col">
+    <div className="animate-fade-in-up delay-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden h-full flex flex-col">
       <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Growth Advisor</h2>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">AI-generated action plan based on your latest scan data</p>
         </div>
         {actions && (
-          <button
-            onClick={refresh}
-            className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-          >
-            Regenerate
-          </button>
+          canGenerate ? (
+            <button
+              onClick={generate}
+              disabled={loading}
+              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-50 transition-colors"
+            >
+              Regenerate
+            </button>
+          ) : (
+            <span className="text-xs text-slate-400 dark:text-slate-500" title="You can generate a new plan once per day">
+              Updated {generatedLabel}
+            </span>
+          )
         )}
       </div>
 
@@ -128,7 +120,7 @@ export default function GrowthAdvisor() {
           </div>
         )}
 
-        {error && (
+        {error && !actions && (
           <div className="text-center py-4">
             <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>
             <button

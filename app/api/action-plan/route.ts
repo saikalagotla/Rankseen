@@ -1,11 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
-import { getRankSnapshots, getLatestAIVisibility, getLatestCitations } from '@/lib/scans'
+import { getRankSnapshots, getLatestAIVisibility, getLatestCitations, getActionPlan } from '@/lib/scans'
+import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Once per day: if already generated today, return the saved plan rather than
+  // spending another AI call.
+  const cooldown = await dailyCooldownRemaining(supabase, user.id, 'action_plan')
+  if (cooldown > 0) {
+    const saved = await getActionPlan(user.id)
+    if (saved) {
+      return Response.json({ actions: saved.actions, generated_at: saved.generated_at, cached: true })
+    }
+    return Response.json({ error: cooldownMessage(cooldown, 'action plan') }, { status: 429 })
+  }
 
   const key = process.env.ANTHROPIC_API_KEY
   if (!key) return Response.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 503 })
@@ -95,11 +107,24 @@ Respond with JSON only, no markdown fences:
   const data = await res.json()
   const content = data.content?.[0]?.text ?? ''
 
+  let parsed: { actions?: unknown }
   try {
     const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    const parsed = JSON.parse(cleaned)
-    return Response.json(parsed)
+    parsed = JSON.parse(cleaned)
   } catch {
     return Response.json({ error: 'Failed to parse action plan response' }, { status: 500 })
   }
+
+  if (!Array.isArray(parsed.actions)) {
+    return Response.json({ error: 'Action plan response was malformed' }, { status: 500 })
+  }
+
+  // Persist the plan and record the daily run (only on success).
+  const generatedAt = new Date().toISOString()
+  await supabase
+    .from('action_plans')
+    .upsert({ user_id: user.id, actions: parsed.actions, generated_at: generatedAt }, { onConflict: 'user_id' })
+  await recordRun(supabase, user.id, 'action_plan')
+
+  return Response.json({ actions: parsed.actions, generated_at: generatedAt })
 }
