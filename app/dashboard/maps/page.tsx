@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { getProfile } from '@/lib/profile'
 import { getRankSnapshots, getLatestCompetitors } from '@/lib/scans'
 import { DEMO_BIZ, DEMO_SNAPSHOTS, DEMO_COMPETITORS } from '@/lib/demo-data'
@@ -56,8 +56,7 @@ function MiniSparkline({ trend }: { trend: (number | null)[] }) {
 }
 
 export default async function MapsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const isDemo = !user
 
   let snapshots: typeof DEMO_SNAPSHOTS

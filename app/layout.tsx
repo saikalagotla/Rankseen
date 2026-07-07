@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./components/auth-provider";
 import MixpanelProvider from "./components/mixpanel-provider";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -28,8 +28,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   return (
     <html

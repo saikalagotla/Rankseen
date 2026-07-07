@@ -3,7 +3,7 @@ import Nav from './components/nav'
 import PricingCard from './components/pricing-card'
 import AnimateOnScroll from './components/animate-on-scroll'
 import LandingCtaButtons from './components/landing-cta-buttons'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
 const features = [
@@ -74,8 +74,7 @@ export default async function LandingPage({
     redirect(`/auth/callback?code=${params.code}&next=${next}`)
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const currentPlanKey = null
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">

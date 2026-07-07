@@ -1,10 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { getProfile } from '@/lib/profile'
 import Sidebar from './components/sidebar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const isDemo = !user
   const profile = user ? await getProfile() : null
   const plan = profile?.plan ?? 'free'

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { getProfile } from '@/lib/profile'
 import { getLatestContentSignals, type ContentSignal } from '@/lib/scans'
 import { DEMO_BIZ, DEMO_CONTENT } from '@/lib/demo-data'
@@ -52,8 +52,7 @@ function ListingRows({ items, emptyText }: { items: ContentSignal[]; emptyText: 
 }
 
 export default async function ContentPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const isDemo = !user
 
   let content: ContentSignal[]

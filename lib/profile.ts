@@ -1,4 +1,6 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 
 export type Profile = {
   id: string
@@ -17,11 +19,13 @@ export type Profile = {
   preview_token: string | null
 }
 
-export async function getProfile(): Promise<Profile | null> {
+// Cached per-request: the dashboard layout and page both call this, so without
+// the cache each navigation runs the profiles query (and a getUser) twice.
+export const getProfile = cache(async (): Promise<Profile | null> => {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getCurrentUser()
     if (!user) return null
+    const supabase = await createClient()
     const { data } = await supabase
       .from('profiles')
       .select('id, business_name, business_type, city_state, gbp_url, website, phone, plan, keywords, place_id, yelp_place_id, google_reviews_synced_at, yelp_reviews_synced_at, preview_token')
@@ -31,4 +35,4 @@ export async function getProfile(): Promise<Profile | null> {
   } catch {
     return null
   }
-}
+})

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { getProfile } from '@/lib/profile'
 import { getLatestCitations } from '@/lib/scans'
 import { DEMO_BIZ, DEMO_CITATIONS } from '@/lib/demo-data'
@@ -37,8 +37,7 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export default async function CitationsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const isDemo = !user
 
   let citations: typeof DEMO_CITATIONS

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { getProfile } from '@/lib/profile'
 import { getRankSnapshots, getLatestAIVisibility, getLatestCitations, getReviews, getActionPlan, type SavedActionPlan } from '@/lib/scans'
 import ScoreCard from '../components/score-card'
@@ -32,8 +32,7 @@ type DigestItem = {
 
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const isDemo = !user
 
   let snapshots: typeof DEMO_SNAPSHOTS

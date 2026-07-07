@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
 import { getProfile } from "@/lib/profile";
 import { getLatestAIVisibility, getLatestAICompetitors } from "@/lib/scans";
 import {
@@ -133,10 +133,7 @@ function buildGeoTips(params: {
 }
 
 export default async function AIVisibilityPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   const isDemo = !user;
 
   let results: typeof DEMO_AI_RESULTS;

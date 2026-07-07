@@ -1,12 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { getReviews, type StoredReview } from '@/lib/scans'
 import { getProfile } from '@/lib/profile'
 import { DEMO_REVIEWS } from '@/lib/demo-data'
 import ReviewsClient from './reviews-client'
 
 export default async function ReviewsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   const isDemo = !user
 
   if (isDemo) {
