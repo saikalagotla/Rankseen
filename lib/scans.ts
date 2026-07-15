@@ -6,6 +6,13 @@ export type RankSnapshot = {
   scan_week: string
 }
 
+export type OrganicSnapshot = {
+  keyword: string
+  rank: number | null
+  url: string | null
+  scan_week: string
+}
+
 export type AIVisibilityResult = {
   engine: string
   query: string
@@ -89,6 +96,18 @@ export async function getRankSnapshots(userId: string, weeksBack = 8): Promise<R
     .limit(weeksBack * 12)
 
   return (data ?? []) as RankSnapshot[]
+}
+
+export async function getOrganicSnapshots(userId: string, weeksBack = 8): Promise<OrganicSnapshot[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('organic_snapshots')
+    .select('keyword, rank, url, scan_week')
+    .eq('user_id', userId)
+    .order('scan_week', { ascending: false })
+    .limit(weeksBack * 12)
+
+  return (data ?? []) as OrganicSnapshot[]
 }
 
 export async function getLatestAIVisibility(userId: string): Promise<AIVisibilityResult[]> {

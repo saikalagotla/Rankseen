@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/auth'
 import { getProfile } from '@/lib/profile'
-import { getRankSnapshots, getLatestCompetitors } from '@/lib/scans'
+import { getRankSnapshots, getLatestCompetitors, getOrganicSnapshots } from '@/lib/scans'
 import { DEMO_BIZ, DEMO_SNAPSHOTS, DEMO_COMPETITORS } from '@/lib/demo-data'
 import ScanTrigger from '../components/scan-trigger'
 import DemoBanner from '../components/demo-banner'
@@ -64,6 +64,8 @@ export default async function MapsPage() {
   let businessName: string
   let cityState: string
   let allKeywords: string[]
+  let hasWebsite = false
+  const organicByKeyword = new Map<string, number | null>()
 
   if (isDemo) {
     snapshots = DEMO_SNAPSHOTS
@@ -71,16 +73,23 @@ export default async function MapsPage() {
     businessName = DEMO_BIZ.business_name
     cityState = DEMO_BIZ.city_state
     allKeywords = DEMO_BIZ.keywords
+    hasWebsite = true
   } else {
-    const [profile, snapshotData, competitorData] = await Promise.all([
+    const [profile, snapshotData, competitorData, organicData] = await Promise.all([
       getProfile(),
       getRankSnapshots(user!.id),
       getLatestCompetitors(user!.id),
+      getOrganicSnapshots(user!.id),
     ])
     snapshots = snapshotData as typeof DEMO_SNAPSHOTS
     competitors = competitorData as typeof DEMO_COMPETITORS
     businessName = profile?.business_name ?? 'Your Business'
     cityState = profile?.city_state ?? ''
+    hasWebsite = !!profile?.website
+    // organicData is newest-first; first occurrence per keyword is the latest
+    for (const o of organicData) {
+      if (!organicByKeyword.has(o.keyword)) organicByKeyword.set(o.keyword, o.rank)
+    }
     allKeywords = [...new Set([
       ...Array.from(new Map(snapshotData.map(s => [s.keyword, true])).keys()),
       ...(profile?.keywords ?? []),
@@ -109,7 +118,10 @@ export default async function MapsPage() {
     const dir: 'up' | 'down' | 'flat' = rawChange > 0 ? 'up' : rawChange < 0 ? 'down' : 'flat'
     const trend = history.slice(0, 7).map(h => h.rank).reverse()
     const latestWeek = history[0]?.scan_week ?? null
-    return { keyword, rank: currentRank, lastWeek: lastWeekRank, change: Math.abs(rawChange), dir, trend, latestWeek }
+    const organicRank = isDemo
+      ? (currentRank !== null ? Math.min(currentRank + 3, 18) : null)
+      : (organicByKeyword.get(keyword) ?? null)
+    return { keyword, rank: currentRank, lastWeek: lastWeekRank, change: Math.abs(rawChange), dir, trend, latestWeek, organicRank }
   })
 
   const improving = keywords.filter(k => k.dir === 'up').length
@@ -160,7 +172,8 @@ export default async function MapsPage() {
           <div>
             <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Keyword Rankings</h2>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-              {hasData ? 'Weekly history · rank = position in Google Maps local results' : 'Click "Scan now" to check your Google Maps rankings'}
+              {hasData ? 'Maps = local pack position · Web = organic Google result' : 'Click "Scan now" to check your Google Maps and web rankings'}
+              {!isDemo && !hasWebsite && <span className="text-amber-600 dark:text-amber-400"> · Add your website in Settings to track web rank</span>}
             </p>
           </div>
           {!isDemo && (
@@ -188,7 +201,8 @@ export default async function MapsPage() {
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-800">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Keyword</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">This Week</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Maps</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Web</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider hidden lg:table-cell">Trend</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">vs Last Wk</th>
                 </tr>
@@ -198,6 +212,7 @@ export default async function MapsPage() {
                   <tr key={row.keyword} className={`${i < keywords.length - 1 ? 'border-b border-slate-50 dark:border-slate-800/70' : ''} hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors`}>
                     <td className="px-6 py-3.5 text-sm text-slate-700 dark:text-slate-300 font-medium">{row.keyword}</td>
                     <td className="px-4 py-3.5 text-center"><div className="flex justify-center"><RankBadge rank={row.rank} /></div></td>
+                    <td className="px-4 py-3.5 text-center"><div className="flex justify-center"><RankBadge rank={row.organicRank} /></div></td>
                     <td className="px-4 py-3.5 hidden lg:table-cell">
                       <div className="flex justify-center">
                         {row.trend.length > 1 ? <MiniSparkline trend={row.trend} /> : <span className="text-xs text-slate-300 dark:text-slate-600">no history</span>}

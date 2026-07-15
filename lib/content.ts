@@ -92,6 +92,27 @@ export async function auditWebsite(
   const titleDescriptive = hasTitle && titleText.includes(city)
   const hasAboutOrServices = /href=["'][^"']*(about|services|menu|treatments|about-us)[^"']*["']/i.test(html)
 
+  // Deeper on-page SEO signals
+  const rawTitle = (html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ?? '').trim()
+  const titleLen = rawTitle.length
+  const metaDescLen = (
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i)?.[1] ??
+    html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i)?.[1] ??
+    ''
+  ).trim().length
+  const h1Count = (html.match(/<h1[\s>]/gi) ?? []).length
+  const imgTags = html.match(/<img\b[^>]*>/gi) ?? []
+  const imgsWithAlt = imgTags.filter(t => /\balt=["'][^"']+["']/i.test(t)).length
+  const wordCount = html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean).length
+  const hasCanonical = /<link[^>]+rel=["']canonical["']/i.test(html)
+
   const checks: AuditCheck[] = [
     {
       id: 'schema',
@@ -150,6 +171,50 @@ export async function auditWebsite(
       label: 'Mobile-friendly viewport',
       passed: hasViewport,
       fix: 'Add a responsive viewport meta tag so the site renders properly on phones — most local searches happen on mobile.',
+    },
+    {
+      id: 'title-length',
+      label: 'Title tag length',
+      passed: titleLen >= 30 && titleLen <= 65,
+      fix: titleLen === 0
+        ? 'Add a <title> tag — it is the clickable headline in search results and a primary topic signal.'
+        : titleLen < 30
+          ? `Your title is short (${titleLen} characters). Aim for 30–60 so it is descriptive without being cut off.`
+          : `Your title is long (${titleLen} characters) and may be truncated in results. Trim it under ~60.`,
+    },
+    {
+      id: 'meta-length',
+      label: 'Meta description length',
+      passed: metaDescLen >= 70 && metaDescLen <= 160,
+      fix: metaDescLen === 0
+        ? 'Add a meta description (~120–155 characters). Engines and AI often use it as your search snippet.'
+        : `Your meta description is ${metaDescLen} characters. Aim for 120–155 so it reads fully and isn't truncated.`,
+    },
+    {
+      id: 'h1',
+      label: 'Single clear H1 heading',
+      passed: h1Count === 1,
+      fix: h1Count === 0
+        ? 'Add one <h1> heading stating what the page is (your business name and type). It is the main on-page topic signal.'
+        : `You have ${h1Count} <h1> headings. Use exactly one per page and make the rest H2/H3 so the primary topic is clear.`,
+    },
+    {
+      id: 'alt-text',
+      label: 'Images have alt text',
+      passed: imgTags.length === 0 || imgsWithAlt / imgTags.length >= 0.8,
+      fix: `${imgTags.length - imgsWithAlt} of ${imgTags.length} images are missing alt text. Describe each image in its alt attribute — it aids accessibility and gives engines extra context.`,
+    },
+    {
+      id: 'content-depth',
+      label: 'Enough page content',
+      passed: wordCount >= 300,
+      fix: `Your homepage has about ${wordCount} words. Thin pages rank poorly — aim for 300+ describing who you are, what you offer, and the areas you serve.`,
+    },
+    {
+      id: 'canonical',
+      label: 'Canonical URL set',
+      passed: hasCanonical,
+      fix: 'Add a <link rel="canonical"> tag pointing to the page\'s preferred URL. It prevents duplicate-content confusion across www/non-www and tracking parameters.',
     },
   ]
 

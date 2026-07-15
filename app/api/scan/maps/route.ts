@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/profile'
-import { checkMapsRank, geocodeCity, getWeekStart } from '@/lib/serp'
+import { checkMapsRank, checkOrganicRank, geocodeCity, getWeekStart, type OrganicRankResult } from '@/lib/serp'
 import { dailyCooldownRemaining, recordRun, cooldownMessage } from '@/lib/rate-limit'
 
 // External API calls are slow; give the function room beyond the default.
@@ -31,9 +31,19 @@ export async function POST() {
   // Geocode once, reuse for all keywords
   const ll = await geocodeCity(location)
 
-  const results = await Promise.allSettled(
-    profile.keywords.map(kw => checkMapsRank(kw, businessName, location, serpApiKey, ll ?? undefined))
-  )
+  const website = profile.website
+  const emptyOrganic: PromiseSettledResult<OrganicRankResult>[] = []
+
+  // Maps rank and organic web rank run concurrently — organic only when a
+  // website is set (it's matched by the site's domain in the results).
+  const [results, organicResults] = await Promise.all([
+    Promise.allSettled(
+      profile.keywords.map(kw => checkMapsRank(kw, businessName, location, serpApiKey, ll ?? undefined))
+    ),
+    website
+      ? Promise.allSettled(profile.keywords.map(kw => checkOrganicRank(kw, website, location, serpApiKey)))
+      : Promise.resolve(emptyOrganic),
+  ])
 
   const rows = profile.keywords.map((keyword, i) => ({
     user_id: user.id,
@@ -41,6 +51,20 @@ export async function POST() {
     rank: results[i].status === 'fulfilled' ? results[i].value.rank : null,
     scan_week: scanWeek,
   }))
+
+  const organicRows = website
+    ? profile.keywords.map((keyword, i) => {
+        const r = organicResults[i]
+        const val = r?.status === 'fulfilled' ? r.value : null
+        return {
+          user_id: user.id,
+          keyword,
+          rank: val?.rank ?? null,
+          url: val?.url ?? null,
+          scan_week: scanWeek,
+        }
+      })
+    : []
 
   const competitorRows: Array<{
     user_id: string
@@ -76,6 +100,17 @@ export async function POST() {
 
   const { error } = await supabase.from('rank_snapshots').insert(rows)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  if (website) {
+    await supabase
+      .from('organic_snapshots')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('scan_week', scanWeek)
+    if (organicRows.length > 0) {
+      await supabase.from('organic_snapshots').insert(organicRows)
+    }
+  }
 
   if (competitorRows.length > 0) {
     await supabase

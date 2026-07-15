@@ -179,3 +179,48 @@ export async function checkCitation(
     url: results[0]?.link,
   }
 }
+
+// Bare registrable hostname for matching (drops protocol, www, path).
+function extractDomain(url: string): string | null {
+  try {
+    const u = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`)
+    return u.hostname.replace(/^www\./i, '').toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+export type OrganicRankResult = { rank: number | null; url: string | null }
+
+// Where the business's WEBSITE ranks in regular Google web results (not the
+// Maps local pack) for a keyword, grounded to the business's city.
+export async function checkOrganicRank(
+  keyword: string,
+  websiteUrl: string,
+  cityState: string,
+  apiKey: string
+): Promise<OrganicRankResult> {
+  const domain = extractDomain(websiteUrl)
+  if (!domain) return { rank: null, url: null }
+
+  const params = new URLSearchParams({
+    api_key: apiKey,
+    engine: 'google',
+    q: keyword,
+    num: '20',
+  })
+  if (cityState) params.set('location', cityState)
+
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, { cache: 'no-store' })
+  if (!res.ok) return { rank: null, url: null }
+
+  const data = await res.json()
+  const results: Array<{ position?: number; link?: string }> = data.organic_results ?? []
+
+  for (const r of results) {
+    if (r.link && extractDomain(r.link) === domain) {
+      return { rank: r.position ?? null, url: r.link ?? null }
+    }
+  }
+  return { rank: null, url: null }
+}
